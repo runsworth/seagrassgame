@@ -3,27 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#052f33">
+  <meta name="theme-color" content="#103b35">
   <title>Estuary Time Trial Leaderboard | Project Seagrass</title>
   <style>
 
     :root {
-      --ocean-950: #052f33;
-      --ocean-900: #064c50;
-      --ocean-800: #08746f;
-      --ocean-700: #0f8f82;
-      --mint-400: #52e0c4;
-      --aqua-300: #78e7f2;
-      --lime-300: #b8ef7f;
-      --coral-400: #ff7d7d;
-      --amber-300: #ffd166;
-      --ink: #123238;
-      --muted: #5d7479;
-      --paper: #f7fbfa;
-      --card: rgba(255, 255, 255, 0.82);
-      --line: rgba(15, 78, 81, 0.12);
-      --shadow: 0 20px 55px rgba(4, 55, 58, 0.16);
-      --soft-shadow: 0 10px 26px rgba(4, 55, 58, 0.10);
+      --ocean-950: #103b35;
+      --ocean-900: #15554c;
+      --ocean-800: #1b7a65;
+      --ocean-700: #24906d;
+      --mint-400: #31c7a6;
+      --aqua-300: #79d7c8;
+      --lime-300: #a9d86e;
+      --coral-400: #d77a63;
+      --amber-300: #d8b353;
+      --ink: #173730;
+      --muted: #61756d;
+      --paper: #f6faf4;
+      --card: rgba(250, 252, 248, 0.86);
+      --line: rgba(21, 85, 76, 0.12);
+      --shadow: 0 20px 55px rgba(16, 59, 53, 0.16);
+      --soft-shadow: 0 10px 26px rgba(16, 59, 53, 0.10);
     }
 
     * { box-sizing: border-box; }
@@ -43,7 +43,7 @@
         radial-gradient(circle at 7% 8%, rgba(82, 224, 196, 0.24), transparent 28rem),
         radial-gradient(circle at 92% 14%, rgba(120, 231, 242, 0.20), transparent 26rem),
         radial-gradient(circle at 55% 110%, rgba(184, 239, 127, 0.16), transparent 34rem),
-        linear-gradient(145deg, #052f33 0%, #07565a 48%, #063d48 100%);
+        linear-gradient(145deg, #103b35 0%, #1a6a57 48%, #18554b 100%);
       overscroll-behavior-y: contain;
     }
 
@@ -72,8 +72,8 @@
       height: 11rem;
       left: -5rem;
       bottom: 9%;
-      border: 1px solid rgba(82,224,196,0.24);
-      box-shadow: 0 0 0 34px rgba(82,224,196,0.028), 0 0 0 72px rgba(82,224,196,0.018);
+      border: 1px solid rgba(49,199,166,0.24);
+      box-shadow: 0 0 0 34px rgba(49,199,166,0.028), 0 0 0 72px rgba(49,199,166,0.018);
     }
 
     body.sheet-open { overflow: hidden; }
@@ -89,7 +89,7 @@
       margin: 0 auto;
       min-height: 100vh;
       min-height: 100dvh;
-      background: rgba(247, 251, 250, 0.94);
+      background: rgba(246, 250, 244, 0.95);
       overflow: hidden;
     }
 
@@ -100,7 +100,7 @@
       padding: calc(10px + env(safe-area-inset-top)) 14px 11px;
       color: #fff;
       background:
-        linear-gradient(115deg, rgba(5,47,51,0.98), rgba(7,92,91,0.96)),
+        linear-gradient(115deg, rgba(16,59,53,0.98), rgba(27,122,101,0.96)),
         var(--ocean-950);
       border-bottom: 1px solid rgba(255,255,255,0.13);
       box-shadow: 0 8px 30px rgba(5,47,51,0.22);
@@ -186,7 +186,7 @@
       overflow: hidden;
       border: 1px solid rgba(255,255,255,0.84);
       border-radius: 30px;
-      background: #8cc789;
+      background: #96c77c;
       isolation: isolate;
       box-shadow: 0 24px 60px rgba(6,76,80,0.24), inset 0 0 0 1px rgba(5,47,51,0.08);
     }
@@ -257,8 +257,8 @@
       text-align: center;
       color: #fff;
       background:
-        radial-gradient(circle at 75% 15%, rgba(82,224,196,0.23), transparent 18rem),
-        linear-gradient(155deg, rgba(5,47,51,0.94), rgba(7,91,88,0.86));
+        radial-gradient(circle at 75% 15%, rgba(49,199,166,0.22), transparent 18rem),
+        linear-gradient(155deg, rgba(16,59,53,0.95), rgba(27,122,101,0.88));
       -webkit-backdrop-filter: blur(10px) saturate(1.15);
       backdrop-filter: blur(10px) saturate(1.15);
     }
@@ -269,7 +269,7 @@
       border: 1px solid rgba(255,255,255,0.22);
       border-radius: 999px;
       background: rgba(255,255,255,0.09);
-      color: #cffff3;
+      color: #e5f7e6;
       font-size: 0.72rem;
       font-weight: 850;
       letter-spacing: 0.11em;
@@ -290,10 +290,15 @@
     #game-overlay p {
       max-width: 510px;
       margin: 0 0 25px;
-      color: rgba(239,255,251,0.82);
+      color: rgba(241,249,242,0.86);
       line-height: 1.56;
       font-size: clamp(0.92rem, 3.6vw, 1.08rem);
       text-wrap: balance;
+    }
+
+    #game-overlay .phase-intro strong {
+      color: #ffffff;
+      font-weight: 900;
     }
 
     .primary-btn,
@@ -309,8 +314,8 @@
 
     .primary-btn {
       color: #053d3f;
-      background: linear-gradient(135deg, #d9fff5 0%, #70ead1 48%, #9becf3 100%);
-      box-shadow: 0 12px 28px rgba(35,218,188,0.27), inset 0 1px 0 rgba(255,255,255,0.8);
+      background: linear-gradient(135deg, #eef8db 0%, #8fd29e 42%, #31c7a6 100%);
+      box-shadow: 0 12px 28px rgba(49,199,166,0.27), inset 0 1px 0 rgba(255,255,255,0.8);
     }
 
     .primary-btn:hover { transform: translateY(-2px); filter: brightness(1.02); }
@@ -370,7 +375,7 @@
       padding: 0;
       border: 1px solid rgba(255,255,255,0.86);
       border-radius: 18px;
-      background: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(237,249,246,0.78));
+      background: linear-gradient(145deg, rgba(255,255,255,0.95), rgba(244,249,239,0.86));
       -webkit-backdrop-filter: blur(9px);
       backdrop-filter: blur(9px);
       box-shadow: 0 10px 22px rgba(5,47,51,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
@@ -552,13 +557,13 @@
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 16px rgba(8,116,111,0.18);
     }
 
-    #sed-bar { background: linear-gradient(90deg, #f4c27a, #d87d4a) !important; }
-    #nut-bar { background: linear-gradient(90deg, #d4ef7f, #79bd64) !important; }
-    #sea-bar { background: linear-gradient(90deg, #39d9b7, #0e8f82) !important; }
+    #sed-bar { background: linear-gradient(90deg, #e5c879, #c48a52) !important; }
+    #nut-bar { background: linear-gradient(90deg, #c9e57a, #74b45f) !important; }
+    #sea-bar { background: linear-gradient(90deg, #65d09f, #1b7a65) !important; }
 
     .society-box {
       color: #315359;
-      background: linear-gradient(145deg, rgba(255,251,229,0.96), rgba(246,252,236,0.9));
+      background: linear-gradient(145deg, rgba(249,245,225,0.96), rgba(239,249,233,0.92));
       border-color: rgba(175,158,58,0.15);
       font-size: 0.84rem;
       font-weight: 700;
@@ -637,7 +642,7 @@
       place-items: center;
       border: 1px solid rgba(255,255,255,0.85);
       border-radius: 19px;
-      background: linear-gradient(145deg, #d9fff5, #b9f2ea);
+      background: linear-gradient(145deg, #edf7e0, #b7e2b0);
       box-shadow: 0 10px 24px rgba(6,76,80,0.14);
       font-size: 29px;
     }
@@ -669,7 +674,7 @@
       padding: 12px;
       border: 1px solid rgba(8,116,111,0.12);
       border-radius: 15px;
-      background: rgba(82,224,196,0.09);
+      background: rgba(49,199,166,0.10);
     }
 
     #sheet-result[hidden],
@@ -782,7 +787,7 @@
     #player-entry label {
       display: block;
       margin: 0 0 7px 2px;
-      color: rgba(239,255,251,0.92);
+      color: rgba(244,251,243,0.94);
       font-size: 0.76rem;
       font-weight: 850;
       letter-spacing: 0.04em;
@@ -813,8 +818,8 @@
     }
 
     #player-name:focus {
-      border-color: var(--mint-400);
-      box-shadow: 0 0 0 4px rgba(82,224,196,0.22);
+      border-color: #31c7a6;
+      box-shadow: 0 0 0 4px rgba(49,199,166,0.22);
     }
 
     #name-error {
@@ -830,8 +835,8 @@
       border-radius: 20px;
       padding: 14px;
       background:
-        radial-gradient(circle at 90% 0%, rgba(255,209,102,0.15), transparent 11rem),
-        linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,250,248,0.91));
+        radial-gradient(circle at 90% 0%, rgba(216,179,83,0.16), transparent 11rem),
+        linear-gradient(145deg, rgba(255,255,255,0.96), rgba(241,248,238,0.93));
       box-shadow: var(--soft-shadow);
     }
 
@@ -852,7 +857,7 @@
       padding: 4px 7px;
       border-radius: 999px;
       color: #73570a;
-      background: rgba(255,209,102,0.25);
+      background: rgba(216,179,83,0.25);
       font-size: 0.62rem;
       font-weight: 900;
       letter-spacing: 0.04em;
@@ -880,7 +885,7 @@
     }
 
     #leaderboard-list li:nth-child(odd) {
-      background: rgba(8,116,111,0.055);
+      background: rgba(27,122,101,0.07);
     }
 
     #leaderboard-list li::before {
@@ -891,14 +896,14 @@
       place-items: center;
       border-radius: 999px;
       color: #fff;
-      background: linear-gradient(145deg, #0f8f82, #07575a);
+      background: linear-gradient(145deg, #24906d, #15554c);
       font-size: 0.68rem;
       font-weight: 900;
     }
 
     #leaderboard-list li.current-score {
-      background: rgba(255,209,102,0.22);
-      box-shadow: inset 0 0 0 1px rgba(190,139,11,0.16);
+      background: rgba(216,179,83,0.18);
+      box-shadow: inset 0 0 0 1px rgba(143,115,29,0.18);
     }
 
     .leaderboard-name {
@@ -1056,7 +1061,7 @@
   <div id="app-shell">
     <header id="compact-hud" aria-label="Game status">
       <div class="hud-topline">
-        <div id="objective-display" aria-live="polite">Ready to explore</div>
+        <div id="objective-display" aria-live="polite">Ready for the two-part challenge</div>
         <div id="player-chip" class="player-chip" hidden></div>
         <div id="timer-display">0:00</div>
       </div>
@@ -1071,16 +1076,17 @@
       <section id="map-container" aria-label="Interactive estuary map">
         <div id="game-overlay">
           <img class="overlay-logo" src="https://www.projectseagrass.org/wp-content/uploads/2025/01/PS-updated-logo-colour-black-text-2048x1221.png" alt="Project Seagrass">
-          <div class="overlay-kicker">🌊 Catchment challenge</div>
-          <h1 id="overlay-title">Can you save the meadow?</h1>
-          <p id="overlay-text">
-            Explore a living estuary, make difficult catchment decisions and discover how sediment and nutrients shape the fate of a seagrass meadow.
+          <div class="overlay-kicker">🌊 Two-part seagrass challenge</div>
+          <h1 id="overlay-title">First, wipe it out. Then, bring it back.</h1>
+          <p id="overlay-text" class="phase-intro">
+            <strong>Part 1 — Understand seagrass loss:</strong> try your hand at wiping out a healthy meadow by identifying the catchment activities that drive sediment and nutrient pollution.<br><br>
+            <strong>Part 2 — Enable recovery:</strong> use what you learned to remove every threat and introduce the actions needed to allow the meadow to recover. Nothing is labelled helpful or harmful—you must reason it out.
           </p>
           <div id="player-entry">
             <label for="player-name">Enter your name for the global leaderboard</label>
             <div class="player-entry-row">
               <input id="player-name" name="player-name" type="text" maxlength="24" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" placeholder="Your name">
-              <button class="primary-btn" id="start-btn" type="button">Start game</button>
+              <button class="primary-btn" id="start-btn" type="button">Begin Part 1</button>
             </div>
             <div id="name-error" role="alert" aria-live="polite"></div>
           </div>
@@ -1094,12 +1100,12 @@
 
       <aside id="ui-panel">
         <div class="instruction-box" id="instruction-text">
-          Every activity is presented neutrally. Inspect it, predict the consequence, then commit to reveal what happens.
+          This is a two-part learning challenge. First, identify what drives seagrass loss. Then, use that knowledge to create the conditions for recovery.
         </div>
 
         <div class="feedback-box" aria-live="polite">
           <strong>Latest result</strong>
-          <span id="feedback-text">Enter the estuary, then tap an activity to investigate it.</span>
+          <span id="feedback-text">Part 1 begins with a healthy meadow. Investigate the activities and work out which pressures can cause it to disappear.</span>
         </div>
 
         <h3>Pollution runoff</h3>
@@ -1763,7 +1769,7 @@
         nodes.forEach(node => { node.active = false; });
         calculatePollution();
         refreshAllNodeVisuals();
-        feedbackText.textContent = "Enter the estuary, then tap an activity to investigate it.";
+        feedbackText.textContent = "Part 1 begins with a healthy meadow. Investigate the activities and work out which pressures can cause it to disappear.";
         updateMeters();
         updateSociety();
       }
@@ -1806,9 +1812,9 @@
           playerChip.hidden = false;
           overlay.style.display = "none";
           gameState = "destroy";
-          objectiveDisplay.textContent = "PHASE 1: Make the meadow collapse";
+          objectiveDisplay.textContent = "PART 1: Understand what drives seagrass loss";
           objectiveDisplay.style.color = "#ffd54f";
-          instructionText.textContent = "Tap an activity to identify it. Decide whether introducing it will damage the estuary, then confirm to reveal the effect.";
+          instructionText.textContent = "PART 1 — Try your hand at wiping out the meadow. Tap each activity, predict whether it will increase sediment or nutrient pressure, and activate the drivers you think will make the seagrass collapse.";
           refreshAllNodeVisuals();
           startTimer();
         } catch (error) {
@@ -1817,7 +1823,7 @@
           startBtn.textContent = previousButtonText;
         } finally {
           startBtn.disabled = false;
-          if (gameState === "destroy") startBtn.textContent = "Start game";
+          if (gameState === "destroy") startBtn.textContent = "Begin Part 1";
         }
       }
 
@@ -1833,7 +1839,7 @@
         const { remainingPressures, missingRecoveryActions } = getRecoveryStatus();
         const threatWord = remainingPressures === 1 ? "threat" : "threats";
         const actionWord = missingRecoveryActions === 1 ? "action" : "actions";
-        objectiveDisplay.textContent = `PHASE 2: ${remainingPressures} ${threatWord} left · ${missingRecoveryActions} recovery ${actionWord} needed`;
+        objectiveDisplay.textContent = `PART 2: Enable recovery · ${remainingPressures} ${threatWord} left · ${missingRecoveryActions} recovery ${actionWord} needed`;
       }
 
       function enterRestorePhase() {
@@ -1841,8 +1847,8 @@
         seagrassHealth = 0;
         closeActionSheet();
         objectiveDisplay.style.color = "#69f0ae";
-        instructionText.textContent = "Full recovery requires three things: restore seagrass health, stop every damaging pressure and activate every recovery measure.";
-        feedbackText.textContent = "The meadow has collapsed. Remove all threats and introduce all recovery actions so the whole catchment supports recovery.";
+        instructionText.textContent = "PART 2 — Learn how to allow the meadow to recover. Remove every damaging pressure, activate every recovery measure and rebuild seagrass health to 100%. Recovery is impossible while any driver of loss remains.";
+        feedbackText.textContent = "You have wiped out the meadow and exposed the drivers of loss. Now reverse them: stop every threat and introduce all the actions needed to create conditions for seagrass recovery.";
         refreshAllNodeVisuals();
         updateRecoveryObjective();
       }
@@ -1881,7 +1887,7 @@
             : `This run took <strong>${formatTime(score.runSeconds)}</strong>. ${rankingText}`;
 
           const safeScorePlayerName = escapeHtml(score.playerName);
-          overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You stopped every damaging pressure and activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to reach full health.`;
+          overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You identified and removed every driver of loss, then activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to return to full health.`;
         } catch (error) {
           console.error("Could not submit shared score:", error);
           overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you restored the ecosystem in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Firebase setup before playing again.`;
