@@ -1169,8 +1169,41 @@
     </div>
   </section>
 
-  <script src="config.js"></script>
   <script>
+    // Firebase public web configuration embedded to avoid config.js loading/caching issues.
+    window.SEAGRASS_FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAXAgHcF_SBhYzgSHOO8-UO_eq23To_qIU",
+      authDomain: "seagrassgame.firebaseapp.com",
+      databaseURL: "https://seagrassgame-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "seagrassgame",
+      storageBucket: "seagrassgame.firebasestorage.app",
+      messagingSenderId: "70641183022",
+      appId: "1:70641183022:web:bc2c8664ff123ab46ef2bf",
+      measurementId: "G-RNVDEPT2YT"
+    };
+  </script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+    import {
+      browserLocalPersistence,
+      getAuth,
+      setPersistence,
+      signInAnonymously
+    } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+    import {
+      endAt,
+      get,
+      getDatabase,
+      limitToFirst,
+      orderByChild,
+      push,
+      query,
+      ref,
+      runTransaction,
+      serverTimestamp,
+      set
+    } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-database.js";
+
     "use strict";
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -1219,8 +1252,15 @@
       let sharedLeaderboard = [];
       let storageAvailable = true;
       let currentRunId = null;
+      let currentRunLocalStartMs = null;
       let leaderboardRefreshTimer = null;
       let isSubmittingScore = false;
+
+      let firebaseApp = null;
+      let firebaseAuth = null;
+      let firebaseDatabase = null;
+      let firebaseUser = null;
+      let firebaseReadyPromise = null;
 
       let currentSediment = BASE_SEDIMENT;
       let targetSediment = BASE_SEDIMENT;
@@ -1310,51 +1350,57 @@
       }
 
       function getSharedConfig() {
-        const config = window.SEAGRASS_CONFIG || {};
+        const config = window.SEAGRASS_FIREBASE_CONFIG || {};
         return {
-          url: String(config.supabaseUrl || "").trim().replace(/\/+$/, ""),
-          key: String(config.supabasePublishableKey || "").trim()
+          apiKey: String(config.apiKey || "").trim(),
+          authDomain: String(config.authDomain || "").trim(),
+          databaseURL: String(config.databaseURL || "").trim().replace(/\/+$/, ""),
+          projectId: String(config.projectId || "").trim(),
+          appId: String(config.appId || "").trim(),
+          messagingSenderId: String(config.messagingSenderId || "").trim()
         };
       }
 
       function sharedLeaderboardIsConfigured() {
-        const { url, key } = getSharedConfig();
-        return /^https:\/\//i.test(url) && key.length > 20 && !url.includes("YOUR_PROJECT") && !key.includes("YOUR_PUBLISHABLE");
+        const config = getSharedConfig();
+        return (
+          config.apiKey.length > 20 &&
+          /^https:\/\//i.test(config.authDomain ? `https://${config.authDomain.replace(/^https?:\/\//i, "")}` : "") &&
+          /^https:\/\//i.test(config.databaseURL) &&
+          config.projectId.length > 3 &&
+          config.appId.length > 10 &&
+          !Object.values(config).some(value => value.includes("YOUR_"))
+        );
       }
 
-      async function callLeaderboardFunction(functionName, parameters = {}) {
-        const { url, key } = getSharedConfig();
+      async function ensureFirebaseReady() {
         if (!sharedLeaderboardIsConfigured()) {
-          throw new Error("The shared leaderboard has not been connected yet. Add your Supabase URL and publishable key to config.js.");
+          throw new Error("Firebase settings are embedded, but the leaderboard could not initialise. Check that Anonymous Authentication is enabled and the Realtime Database rules are published.");
         }
 
-        const response = await fetch(`${url}/rest/v1/rpc/${functionName}`, {
-          method: "POST",
-          headers: {
-            apikey: key,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(parameters)
+        if (firebaseReadyPromise) return firebaseReadyPromise;
+
+        firebaseReadyPromise = (async () => {
+          const config = getSharedConfig();
+          firebaseApp = initializeApp(config);
+          firebaseAuth = getAuth(firebaseApp);
+          firebaseDatabase = getDatabase(firebaseApp);
+
+          await setPersistence(firebaseAuth, browserLocalPersistence);
+          if (!firebaseAuth.currentUser) {
+            await signInAnonymously(firebaseAuth);
+          }
+
+          firebaseUser = firebaseAuth.currentUser;
+          if (!firebaseUser) throw new Error("Firebase anonymous sign-in did not return a player identity.");
+
+          return { database: firebaseDatabase, user: firebaseUser };
+        })().catch(error => {
+          firebaseReadyPromise = null;
+          throw error;
         });
 
-        const rawBody = await response.text();
-        let payload = null;
-        if (rawBody) {
-          try {
-            payload = JSON.parse(rawBody);
-          } catch (error) {
-            payload = rawBody;
-          }
-        }
-
-        if (!response.ok) {
-          const message = payload && typeof payload === "object"
-            ? payload.message || payload.details || `Leaderboard request failed (${response.status}).`
-            : String(payload || `Leaderboard request failed (${response.status}).`);
-          throw new Error(message);
-        }
-
-        return payload;
+        return firebaseReadyPromise;
       }
 
       function renderLeaderboard() {
@@ -1363,7 +1409,7 @@
         if (!sharedLeaderboardIsConfigured()) {
           const setup = document.createElement("li");
           setup.className = "leaderboard-empty";
-          setup.textContent = "Shared leaderboard setup is required. Follow README.md in the download package.";
+          setup.textContent = "Firebase setup is required. Follow README.md in the download package.";
           leaderboardList.appendChild(setup);
           refreshLeaderboardButton.hidden = true;
           return;
@@ -1383,7 +1429,7 @@
           const item = document.createElement("li");
           if (
             currentScoreMarker &&
-            entry.name.toLocaleLowerCase() === currentScoreMarker.name.toLocaleLowerCase() &&
+            entry.uid === currentScoreMarker.uid &&
             entry.seconds === currentScoreMarker.seconds
           ) {
             item.classList.add("current-score");
@@ -1405,7 +1451,7 @@
       async function loadSharedLeaderboard({ silent = false } = {}) {
         if (!sharedLeaderboardIsConfigured()) {
           sharedLeaderboard = [];
-          leaderboardNote.textContent = "Connect Supabase in config.js to activate the shared leaderboard.";
+          leaderboardNote.textContent = "Connecting to the shared Firebase leaderboard…";
           renderLeaderboard();
           return;
         }
@@ -1414,21 +1460,37 @@
         refreshLeaderboardButton.disabled = true;
 
         try {
-          const rows = await callLeaderboardFunction("get_seagrass_leaderboard", { p_limit: 10 });
-          sharedLeaderboard = (Array.isArray(rows) ? rows : [])
-            .filter(row => row && typeof row.player_name === "string" && Number.isFinite(Number(row.best_seconds)))
-            .map(row => ({
-              name: normalisePlayerName(row.player_name),
-              seconds: Math.max(0, Math.round(Number(row.best_seconds)))
-            }))
-            .filter(row => row.name)
-            .sort((a, b) => a.seconds - b.seconds)
+          const { database } = await ensureFirebaseReady();
+          const leaderboardQuery = query(
+            ref(database, "leaderboard"),
+            orderByChild("bestMs"),
+            limitToFirst(10)
+          );
+          const snapshot = await get(leaderboardQuery);
+          const rows = [];
+
+          snapshot.forEach(childSnapshot => {
+            const row = childSnapshot.val();
+            if (row && typeof row.name === "string" && Number.isFinite(Number(row.bestMs))) {
+              const name = normalisePlayerName(row.name);
+              if (name) {
+                rows.push({
+                  uid: childSnapshot.key,
+                  name,
+                  seconds: Math.max(0, Math.round(Number(row.bestMs) / 1000))
+                });
+              }
+            }
+          });
+
+          sharedLeaderboard = rows
+            .sort((a, b) => a.seconds - b.seconds || a.name.localeCompare(b.name))
             .slice(0, 10);
           renderLeaderboard();
           leaderboardNote.textContent = "Live global scores shared across phones and computers.";
         } catch (error) {
           console.error("Could not load shared leaderboard:", error);
-          leaderboardNote.textContent = "The shared leaderboard is temporarily unavailable. Tap Refresh to try again.";
+          leaderboardNote.textContent = "The Firebase leaderboard is temporarily unavailable. Tap Refresh to try again.";
           renderLeaderboard();
         } finally {
           refreshLeaderboardButton.disabled = false;
@@ -1436,29 +1498,94 @@
       }
 
       async function createSharedRun() {
-        const runId = await callLeaderboardFunction("start_seagrass_run");
-        if (typeof runId !== "string" || !runId) {
-          throw new Error("The leaderboard did not return a valid run identifier.");
+        const { database, user } = await ensureFirebaseReady();
+        const runReference = push(ref(database, `runs/${user.uid}`));
+        if (!runReference.key) throw new Error("Firebase did not create a valid run identifier.");
+
+        await set(runReference, {
+          startedAt: serverTimestamp(),
+          status: "started"
+        });
+
+        currentRunLocalStartMs = performance.now();
+        return runReference.key;
+      }
+
+      async function calculateLeaderboardRank(database, bestMs) {
+        try {
+          const rankQuery = query(
+            ref(database, "leaderboard"),
+            orderByChild("bestMs"),
+            endAt(bestMs)
+          );
+          const snapshot = await get(rankQuery);
+          let fasterScores = 0;
+          snapshot.forEach(childSnapshot => {
+            const value = childSnapshot.val();
+            if (value && Number(value.bestMs) < bestMs) fasterScores += 1;
+          });
+          return fasterScores + 1;
+        } catch (error) {
+          console.warn("Could not calculate exact leaderboard rank:", error);
+          return null;
         }
-        return runId;
       }
 
       async function submitSharedScore(name, runId) {
-        const rows = await callLeaderboardFunction("finish_seagrass_run", {
-          p_run_id: runId,
-          p_player_name: name
-        });
-        const score = Array.isArray(rows) ? rows[0] : rows;
-        if (!score || !Number.isFinite(Number(score.run_seconds))) {
-          throw new Error("The leaderboard did not return a valid score.");
+        const { database, user } = await ensureFirebaseReady();
+        if (!currentRunLocalStartMs) throw new Error("This run does not have a valid local start time.");
+
+        const elapsedMs = Math.max(0, Math.round(performance.now() - currentRunLocalStartMs));
+        const completionReference = ref(database, `completedRuns/${user.uid}/${runId}`);
+        let completionSnapshot = await get(completionReference);
+
+        if (!completionSnapshot.exists()) {
+          await set(completionReference, {
+            name,
+            elapsedMs,
+            finishedAt: serverTimestamp()
+          });
+          completionSnapshot = await get(completionReference);
         }
 
+        const completion = completionSnapshot.val();
+        const verifiedRunMs = Math.max(0, Math.round(Number(completion && completion.elapsedMs)));
+        if (!completion || !Number.isFinite(verifiedRunMs) || verifiedRunMs < 1) {
+          throw new Error("Firebase did not return a valid completed run.");
+        }
+
+        const scoreReference = ref(database, `leaderboard/${user.uid}`);
+        let previousBestMs = Number.POSITIVE_INFINITY;
+        const transactionResult = await runTransaction(scoreReference, current => {
+          previousBestMs = current && Number.isFinite(Number(current.bestMs))
+            ? Number(current.bestMs)
+            : Number.POSITIVE_INFINITY;
+          const bestMs = Math.min(previousBestMs, verifiedRunMs);
+
+          return {
+            name,
+            bestMs,
+            lastRunMs: verifiedRunMs,
+            runId,
+            updatedAt: serverTimestamp()
+          };
+        }, { applyLocally: false });
+
+        if (!transactionResult.committed) {
+          throw new Error("Firebase did not commit the leaderboard result.");
+        }
+
+        const saved = transactionResult.snapshot.val();
+        const bestMs = Math.max(0, Math.round(Number(saved.bestMs)));
+        const rank = await calculateLeaderboardRank(database, bestMs);
+
         return {
-          playerName: normalisePlayerName(score.player_name || name),
-          runSeconds: Math.max(0, Math.round(Number(score.run_seconds))),
-          bestSeconds: Math.max(0, Math.round(Number(score.best_seconds))),
-          rank: Number.isFinite(Number(score.leaderboard_rank)) ? Math.round(Number(score.leaderboard_rank)) : null,
-          improved: Boolean(score.improved)
+          uid: user.uid,
+          playerName: normalisePlayerName(saved.name || name),
+          runSeconds: Math.max(0, Math.round(verifiedRunMs / 1000)),
+          bestSeconds: Math.max(0, Math.round(bestMs / 1000)),
+          rank,
+          improved: verifiedRunMs < previousBestMs
         };
       }
 
@@ -1653,7 +1780,7 @@
         }
 
         if (!sharedLeaderboardIsConfigured()) {
-          nameError.textContent = "The shared leaderboard is not connected yet. Complete config.js before publishing the game.";
+          nameError.textContent = "Firebase could not initialise. Check Anonymous Authentication and your Realtime Database rules.";
           playerNameInput.setAttribute("aria-invalid", "true");
           return;
         }
@@ -1686,7 +1813,7 @@
           startTimer();
         } catch (error) {
           console.error("Could not start shared run:", error);
-          nameError.textContent = "Could not connect to the shared leaderboard. Check your internet connection and Supabase setup.";
+          nameError.textContent = "Could not connect to Firebase. Check your internet connection, Firebase configuration, Anonymous Authentication and database rules.";
           startBtn.textContent = previousButtonText;
         } finally {
           startBtn.disabled = false;
@@ -1743,7 +1870,7 @@
           const score = await submitSharedScore(currentPlayerName || "Player", currentRunId);
           elapsedSeconds = score.runSeconds;
           timerDisplay.textContent = formatTime(score.runSeconds);
-          currentScoreMarker = { name: score.playerName, seconds: score.bestSeconds };
+          currentScoreMarker = { uid: score.uid, name: score.playerName, seconds: score.bestSeconds };
           await loadSharedLeaderboard({ silent: true });
 
           const rankingText = score.rank
@@ -1757,12 +1884,13 @@
           overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You stopped every damaging pressure and activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to reach full health.`;
         } catch (error) {
           console.error("Could not submit shared score:", error);
-          overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you restored the ecosystem in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Supabase setup before playing again.`;
+          overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you restored the ecosystem in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Firebase setup before playing again.`;
           leaderboardNote.textContent = "Score submission failed. Tap Refresh after checking the connection.";
         } finally {
           gameState = "won";
           isSubmittingScore = false;
           currentRunId = null;
+          currentRunLocalStartMs = null;
           refreshAllNodeVisuals();
           startBtn.textContent = "Play Again";
           startBtn.disabled = false;
