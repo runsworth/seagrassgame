@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#052f33">
+  <title>Estuary Time Trial Leaderboard | Project Seagrass</title>
+  <style>
+
+    :root {
+      --ocean-950: #052f33;
+      --ocean-900: #064c50;
+      --ocean-800: #08746f;
+      --ocean-700: #0f8f82;
+      --mint-400: #52e0c4;
+      --aqua-300: #78e7f2;
+      --lime-300: #b8ef7f;
+      --coral-400: #ff7d7d;
+      --amber-300: #ffd166;
+      --ink: #123238;
+      --muted: #5d7479;
+      --paper: #f7fbfa;
+      --card: rgba(255, 255, 255, 0.82);
+      --line: rgba(15, 78, 81, 0.12);
+      --shadow: 0 20px 55px rgba(4, 55, 58, 0.16);
+      --soft-shadow: 0 10px 26px rgba(4, 55, 58, 0.10);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      background: var(--ocean-950);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 7% 8%, rgba(82, 224, 196, 0.24), transparent 28rem),
+        radial-gradient(circle at 92% 14%, rgba(120, 231, 242, 0.20), transparent 26rem),
+        radial-gradient(circle at 55% 110%, rgba(184, 239, 127, 0.16), transparent 34rem),
+        linear-gradient(145deg, #052f33 0%, #07565a 48%, #063d48 100%);
+      overscroll-behavior-y: contain;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      border-radius: 999px;
+      filter: blur(1px);
+      pointer-events: none;
+      opacity: 0.35;
+    }
+
+    body::before {
+      width: 18rem;
+      height: 18rem;
+      top: 12%;
+      right: -7rem;
+      border: 1px solid rgba(255,255,255,0.18);
+      box-shadow: 0 0 0 45px rgba(255,255,255,0.025), 0 0 0 95px rgba(255,255,255,0.018);
+    }
+
+    body::after {
+      width: 11rem;
+      height: 11rem;
+      left: -5rem;
+      bottom: 9%;
+      border: 1px solid rgba(82,224,196,0.24);
+      box-shadow: 0 0 0 34px rgba(82,224,196,0.028), 0 0 0 72px rgba(82,224,196,0.018);
+    }
+
+    body.sheet-open { overflow: hidden; }
+
+    button {
+      font: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #app-shell {
+      width: min(100%, 1120px);
+      margin: 0 auto;
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: rgba(247, 251, 250, 0.94);
+      overflow: hidden;
+    }
+
+    #compact-hud {
+      position: sticky;
+      top: 0;
+      z-index: 300;
+      padding: calc(10px + env(safe-area-inset-top)) 14px 11px;
+      color: #fff;
+      background:
+        linear-gradient(115deg, rgba(5,47,51,0.98), rgba(7,92,91,0.96)),
+        var(--ocean-950);
+      border-bottom: 1px solid rgba(255,255,255,0.13);
+      box-shadow: 0 8px 30px rgba(5,47,51,0.22);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+
+    .hud-topline {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 9px;
+      align-items: center;
+    }
+
+    #objective-display {
+      width: fit-content;
+      max-width: 100%;
+      padding: 6px 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 999px;
+      color: #e9fffa;
+      background: rgba(255,255,255,0.09);
+      font-size: 0.78rem;
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: 0.015em;
+    }
+
+    #timer-display {
+      min-width: 58px;
+      color: #fff;
+      font-size: 1.13rem;
+      line-height: 1;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .mini-meters {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 9px;
+    }
+
+    .mini-meter {
+      min-width: 0;
+      padding: 7px 9px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+      font-size: 0.68rem;
+      font-weight: 650;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 5px;
+      color: rgba(255,255,255,0.72);
+    }
+
+    .mini-meter strong {
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 850;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 690px) minmax(285px, 330px);
+      align-items: start;
+      gap: 22px;
+      padding: 22px;
+    }
+
+    #map-container {
+      position: relative;
+      width: 100%;
+      max-width: 650px;
+      aspect-ratio: 1 / 1;
+      justify-self: center;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.84);
+      border-radius: 30px;
+      background: #8cc789;
+      isolation: isolate;
+      box-shadow: 0 24px 60px rgba(6,76,80,0.24), inset 0 0 0 1px rgba(5,47,51,0.08);
+    }
+
+    #map-container::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 62;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.38), inset 0 -55px 80px rgba(4,35,38,0.13);
+    }
+
+    #map-container::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 22%;
+      z-index: 61;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.13), transparent);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      filter: saturate(1.07) contrast(1.02);
+    }
+
+    #brand-mark {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      z-index: 80;
+      width: clamp(126px, 28%, 190px);
+      min-height: 46px;
+      padding: 7px 10px;
+      border: 1px solid rgba(255,255,255,0.78);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.88);
+      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 8px 24px rgba(5,47,51,0.14);
+      pointer-events: none;
+      display: grid;
+      place-items: center;
+    }
+
+    #brand-mark img {
+      display: block;
+      width: 100%;
+      height: auto;
+      max-height: 48px;
+      object-fit: contain;
+    }
+
+    #game-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: clamp(25px, 7vw, 54px);
+      text-align: center;
+      color: #fff;
+      background:
+        radial-gradient(circle at 75% 15%, rgba(82,224,196,0.23), transparent 18rem),
+        linear-gradient(155deg, rgba(5,47,51,0.94), rgba(7,91,88,0.86));
+      -webkit-backdrop-filter: blur(10px) saturate(1.15);
+      backdrop-filter: blur(10px) saturate(1.15);
+    }
+
+    .overlay-kicker {
+      margin-bottom: 14px;
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,0.22);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.09);
+      color: #cffff3;
+      font-size: 0.72rem;
+      font-weight: 850;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+    }
+
+    #game-overlay h1 {
+      max-width: 560px;
+      margin: 0 0 13px;
+      color: #fff;
+      font-size: clamp(2.15rem, 8.6vw, 4.15rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+      text-wrap: balance;
+      text-shadow: 0 10px 28px rgba(1,25,28,0.24);
+    }
+
+    #game-overlay p {
+      max-width: 510px;
+      margin: 0 0 25px;
+      color: rgba(239,255,251,0.82);
+      line-height: 1.56;
+      font-size: clamp(0.92rem, 3.6vw, 1.08rem);
+      text-wrap: balance;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      min-height: 50px;
+      border-radius: 15px;
+      padding: 13px 20px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-weight: 850;
+      transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+    }
+
+    .primary-btn {
+      color: #053d3f;
+      background: linear-gradient(135deg, #d9fff5 0%, #70ead1 48%, #9becf3 100%);
+      box-shadow: 0 12px 28px rgba(35,218,188,0.27), inset 0 1px 0 rgba(255,255,255,0.8);
+    }
+
+    .primary-btn:hover { transform: translateY(-2px); filter: brightness(1.02); }
+    .primary-btn:active { transform: translateY(0) scale(0.98); }
+
+    #start-btn {
+      position: relative;
+      z-index: 4;
+      min-width: 190px;
+      -webkit-appearance: none;
+      appearance: none;
+      touch-action: manipulation;
+      pointer-events: auto;
+    }
+
+    .iphone-note {
+      max-width: 450px;
+      margin: 14px 0 0 !important;
+      color: rgba(235,255,250,0.58) !important;
+      font-size: 0.7rem !important;
+      line-height: 1.4 !important;
+    }
+
+    .script-warning {
+      max-width: 470px;
+      margin: 12px 0 0;
+      padding: 10px;
+      border: 1px solid rgba(255,125,125,0.7);
+      border-radius: 13px;
+      background: rgba(100,8,8,0.54);
+      color: #fff;
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .secondary-btn {
+      color: var(--ink);
+      border-color: var(--line);
+      background: rgba(239,246,244,0.94);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+    }
+
+    .primary-btn:focus-visible,
+    .secondary-btn:focus-visible,
+    .map-node:focus-visible {
+      outline: 4px solid var(--amber-300);
+      outline-offset: 3px;
+    }
+
+    .map-node {
+      position: absolute;
+      z-index: 30;
+      width: 54px;
+      height: 54px;
+      min-width: 48px;
+      min-height: 48px;
+      padding: 0;
+      border: 1px solid rgba(255,255,255,0.86);
+      border-radius: 18px;
+      background: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(237,249,246,0.78));
+      -webkit-backdrop-filter: blur(9px);
+      backdrop-filter: blur(9px);
+      box-shadow: 0 10px 22px rgba(5,47,51,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
+      transform: translate(-50%, -50%);
+      display: grid;
+      place-items: center;
+      font-size: 25px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      transition: transform 0.16s ease, background 0.18s ease, border-color 0.18s ease, opacity 0.16s ease, box-shadow 0.18s ease;
+    }
+
+    .map-node::after {
+      content: "";
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(18,50,56,0.18);
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.7);
+    }
+
+    .map-node:active:not(:disabled) { transform: translate(-50%, -50%) scale(0.92); }
+
+    .map-node.active {
+      color: #fff;
+      border-color: rgba(255,255,255,0.48);
+      background: linear-gradient(145deg, #08746f, #09555d);
+      box-shadow: 0 13px 27px rgba(4,63,66,0.34), 0 0 0 4px rgba(82,224,196,0.22);
+    }
+
+    .map-node.active::after {
+      background: var(--mint-400);
+      box-shadow: 0 0 0 2px rgba(5,47,51,0.8), 0 0 11px rgba(82,224,196,0.8);
+    }
+
+    .map-node.pending {
+      border-color: rgba(255,209,102,0.95);
+      background: linear-gradient(145deg, #fff9df, #ffe0a3);
+      box-shadow: 0 14px 28px rgba(112,74,5,0.25), 0 0 0 5px rgba(255,209,102,0.28);
+    }
+
+    .map-node:disabled {
+      opacity: 0.48;
+      filter: grayscale(0.55) saturate(0.65);
+      cursor: default;
+      box-shadow: 0 6px 16px rgba(5,47,51,0.09);
+    }
+
+    #ui-panel {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .instruction-box,
+    .feedback-box,
+    .meter-box,
+    .society-box {
+      border: 1px solid rgba(10,92,91,0.10);
+      border-radius: 18px;
+      padding: 14px;
+      background: var(--card);
+      box-shadow: var(--soft-shadow);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+
+    .instruction-box {
+      color: #18575a;
+      background: linear-gradient(145deg, rgba(226,251,245,0.96), rgba(242,253,250,0.88));
+      font-size: 0.85rem;
+      line-height: 1.48;
+    }
+
+    .instruction-box::before {
+      content: "Think first";
+      display: block;
+      width: fit-content;
+      margin-bottom: 7px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      color: #067069;
+      background: rgba(82,224,196,0.19);
+      font-size: 0.65rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .feedback-box {
+      min-height: 120px;
+      color: #405e62;
+      background: linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,250,248,0.88));
+      font-size: 0.84rem;
+      line-height: 1.48;
+    }
+
+    .feedback-box strong {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+      color: var(--ocean-900);
+      font-size: 0.72rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .feedback-box strong::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--mint-400);
+      box-shadow: 0 0 0 4px rgba(82,224,196,0.16);
+    }
+
+    .effect-line {
+      display: block;
+      margin: 8px 0;
+      padding: 8px 10px;
+      border-radius: 11px;
+      color: #254a4d;
+      background: rgba(9,112,105,0.07);
+      font-weight: 850;
+    }
+
+    h3 {
+      margin: 9px 2px 1px;
+      padding: 0;
+      border: 0;
+      color: var(--ocean-950);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .meter-box {
+      padding: 13px 14px;
+      background: rgba(255,255,255,0.84) !important;
+      border-color: rgba(10,92,91,0.10) !important;
+    }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+      color: #315359;
+      font-size: 0.8rem;
+      font-weight: 750;
+    }
+
+    .meter-label span:last-child {
+      color: var(--ocean-900);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-bar {
+      height: 9px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(5,47,51,0.10);
+      box-shadow: inset 0 1px 2px rgba(5,47,51,0.08);
+    }
+
+    .progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      transition: width 0.22s linear;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 0 16px rgba(8,116,111,0.18);
+    }
+
+    #sed-bar { background: linear-gradient(90deg, #f4c27a, #d87d4a) !important; }
+    #nut-bar { background: linear-gradient(90deg, #d4ef7f, #79bd64) !important; }
+    #sea-bar { background: linear-gradient(90deg, #39d9b7, #0e8f82) !important; }
+
+    .society-box {
+      color: #315359;
+      background: linear-gradient(145deg, rgba(255,251,229,0.96), rgba(246,252,236,0.9));
+      border-color: rgba(175,158,58,0.15);
+      font-size: 0.84rem;
+      font-weight: 700;
+      line-height: 1.85;
+    }
+
+    .society-box span { color: #1e5353; font-weight: 900; }
+
+    .legend {
+      margin-top: 2px;
+      padding: 2px 4px 6px;
+      color: #6c8184;
+      font-size: 0.73rem;
+      line-height: 1.43;
+    }
+
+    #sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 450;
+      border: 0;
+      padding: 0;
+      background: rgba(2,25,28,0.58);
+      -webkit-backdrop-filter: blur(3px);
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    #sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    #action-sheet {
+      position: fixed;
+      left: 50%;
+      bottom: 0;
+      z-index: 500;
+      width: min(590px, calc(100% - 16px));
+      padding: 12px 18px calc(18px + env(safe-area-inset-bottom));
+      border: 1px solid rgba(255,255,255,0.68);
+      border-radius: 28px 28px 0 0;
+      background: rgba(249,253,252,0.97);
+      box-shadow: 0 -22px 60px rgba(2,35,38,0.35);
+      -webkit-backdrop-filter: blur(22px);
+      backdrop-filter: blur(22px);
+      transform: translate(-50%, calc(100% + 28px));
+      visibility: hidden;
+      transition: transform 0.26s cubic-bezier(.2,.8,.2,1), visibility 0s linear 0.26s;
+    }
+
+    #action-sheet.open {
+      transform: translate(-50%, 0);
+      visibility: visible;
+      transition: transform 0.26s cubic-bezier(.2,.8,.2,1);
+    }
+
+    .sheet-handle {
+      width: 46px;
+      height: 5px;
+      margin: 0 auto 13px;
+      border-radius: 999px;
+      background: rgba(5,47,51,0.17);
+    }
+
+    .sheet-heading {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 13px;
+      align-items: center;
+    }
+
+    #sheet-icon {
+      width: 58px;
+      height: 58px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.85);
+      border-radius: 19px;
+      background: linear-gradient(145deg, #d9fff5, #b9f2ea);
+      box-shadow: 0 10px 24px rgba(6,76,80,0.14);
+      font-size: 29px;
+    }
+
+    #sheet-title {
+      margin: 0;
+      color: var(--ocean-950);
+      font-size: 1.22rem;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+
+    #sheet-status {
+      margin: 5px 0 0;
+      color: #71878a;
+      font-size: 0.76rem;
+      font-weight: 750;
+    }
+
+    #sheet-prompt,
+    #sheet-result {
+      margin: 14px 0;
+      color: #49666a;
+      line-height: 1.5;
+      font-size: 0.9rem;
+    }
+
+    #sheet-result {
+      padding: 12px;
+      border: 1px solid rgba(8,116,111,0.12);
+      border-radius: 15px;
+      background: rgba(82,224,196,0.09);
+    }
+
+    #sheet-result[hidden],
+    #confirm-action[hidden] { display: none; }
+
+    #sheet-actions {
+      display: grid;
+      grid-template-columns: 1fr 1.45fr;
+      gap: 10px;
+    }
+
+    @keyframes nodeFloat {
+      0%, 100% { margin-top: 0; }
+      50% { margin-top: -3px; }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .map-node:hover:not(:disabled) {
+        transform: translate(-50%, -50%) scale(1.09);
+        box-shadow: 0 15px 30px rgba(5,47,51,0.27), inset 0 1px 0 rgba(255,255,255,0.95);
+      }
+    }
+
+    @media (max-width: 780px) {
+      #app-shell { background: rgba(247,251,250,0.98); }
+
+      #game-layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 0;
+      }
+
+      #map-container {
+        max-width: none;
+        border-left: 0;
+        border-right: 0;
+        border-top: 0;
+        border-radius: 0 0 28px 28px;
+        box-shadow: 0 18px 42px rgba(6,76,80,0.22);
+      }
+
+      #ui-panel {
+        padding: 18px 14px calc(22px + env(safe-area-inset-bottom));
+      }
+
+      .feedback-box { min-height: auto; }
+
+      .map-node {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        font-size: 22px;
+      }
+    }
+
+    @media (min-width: 781px) {
+      body { padding: 26px; }
+
+      #app-shell {
+        min-height: auto;
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 30px;
+        box-shadow: 0 30px 90px rgba(0,25,29,0.38);
+      }
+
+      #compact-hud { position: relative; padding-top: 12px; }
+    }
+
+    @media (max-width: 390px) {
+      #compact-hud { padding-left: 10px; padding-right: 10px; }
+      .mini-meter { padding: 6px 7px; font-size: 0.63rem; }
+      .mini-meter span:first-child { max-width: 58px; overflow: hidden; text-overflow: ellipsis; }
+      #action-sheet { width: 100%; }
+      #game-overlay h1 { font-size: clamp(2rem, 12vw, 3rem); }
+    }
+
+
+    .player-chip {
+      max-width: 120px;
+      min-height: 30px;
+      padding: 6px 9px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      color: #dffff7;
+      background: rgba(255,255,255,0.08);
+      font-size: 0.72rem;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .overlay-logo {
+      display: block;
+      width: min(250px, 68%);
+      height: auto;
+      margin: 0 0 18px;
+      padding: 9px 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.94);
+      box-shadow: 0 14px 34px rgba(1,25,28,0.22);
+    }
+
+    #player-entry {
+      width: min(100%, 440px);
+      margin: 0 0 15px;
+      text-align: left;
+    }
+
+    #player-entry label {
+      display: block;
+      margin: 0 0 7px 2px;
+      color: rgba(239,255,251,0.92);
+      font-size: 0.76rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+    }
+
+    .player-entry-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 9px;
+    }
+
+    #player-name {
+      width: 100%;
+      min-width: 0;
+      min-height: 50px;
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 15px;
+      padding: 12px 14px;
+      color: #083f42;
+      background: rgba(255,255,255,0.96);
+      box-shadow: inset 0 1px 2px rgba(5,47,51,0.08);
+      font: inherit;
+      font-size: 1rem;
+      font-weight: 750;
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    #player-name:focus {
+      border-color: var(--mint-400);
+      box-shadow: 0 0 0 4px rgba(82,224,196,0.22);
+    }
+
+    #name-error {
+      min-height: 18px;
+      margin: 6px 2px 0;
+      color: #ffd5d5;
+      font-size: 0.72rem;
+      font-weight: 750;
+    }
+
+    .leaderboard-card {
+      border: 1px solid rgba(10,92,91,0.12);
+      border-radius: 20px;
+      padding: 14px;
+      background:
+        radial-gradient(circle at 90% 0%, rgba(255,209,102,0.15), transparent 11rem),
+        linear-gradient(145deg, rgba(255,255,255,0.96), rgba(239,250,248,0.91));
+      box-shadow: var(--soft-shadow);
+    }
+
+    .leaderboard-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 9px;
+    }
+
+    .leaderboard-heading h3 {
+      margin: 0;
+      font-size: 0.76rem;
+    }
+
+    .leaderboard-badge {
+      padding: 4px 7px;
+      border-radius: 999px;
+      color: #73570a;
+      background: rgba(255,209,102,0.25);
+      font-size: 0.62rem;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    #leaderboard-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      counter-reset: score-rank;
+    }
+
+    #leaderboard-list li {
+      counter-increment: score-rank;
+      display: grid;
+      grid-template-columns: 25px minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 7px;
+      border-radius: 11px;
+      color: #315359;
+      font-size: 0.78rem;
+    }
+
+    #leaderboard-list li:nth-child(odd) {
+      background: rgba(8,116,111,0.055);
+    }
+
+    #leaderboard-list li::before {
+      content: counter(score-rank);
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #fff;
+      background: linear-gradient(145deg, #0f8f82, #07575a);
+      font-size: 0.68rem;
+      font-weight: 900;
+    }
+
+    #leaderboard-list li.current-score {
+      background: rgba(255,209,102,0.22);
+      box-shadow: inset 0 0 0 1px rgba(190,139,11,0.16);
+    }
+
+    .leaderboard-name {
+      overflow: hidden;
+      color: #174f52;
+      font-weight: 850;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .leaderboard-time {
+      color: var(--ocean-900);
+      font-variant-numeric: tabular-nums;
+      font-weight: 900;
+    }
+
+    .leaderboard-empty {
+      display: block !important;
+      padding: 11px 4px !important;
+      color: #6b8185;
+      background: transparent !important;
+      font-size: 0.78rem;
+      line-height: 1.4;
+    }
+
+    #leaderboard-list li.leaderboard-empty::before {
+      display: none;
+      content: none;
+    }
+
+    .leaderboard-footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      margin-top: 9px;
+      color: #72868a;
+      font-size: 0.65rem;
+      line-height: 1.35;
+    }
+
+    #clear-leaderboard {
+      border: 0;
+      padding: 4px 0;
+      color: #5a777a;
+      background: transparent;
+      font: inherit;
+      font-size: 0.65rem;
+      font-weight: 850;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 520px) {
+      .hud-topline {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+
+      .player-chip {
+        display: none !important;
+      }
+
+      #game-overlay {
+        justify-content: center;
+        overflow: hidden;
+        padding: 16px 20px 18px;
+      }
+
+      .overlay-logo {
+        width: min(192px, 58%);
+        max-height: 72px;
+        margin-bottom: 9px;
+        padding: 6px 10px;
+        border-radius: 14px;
+      }
+
+      .overlay-kicker {
+        margin-bottom: 8px;
+        padding: 5px 9px;
+        font-size: 0.62rem;
+      }
+
+      #game-overlay h1 {
+        margin-bottom: 8px;
+        font-size: clamp(1.95rem, 9.4vw, 2.55rem);
+        line-height: 0.98;
+      }
+
+      #game-overlay p {
+        max-width: 330px;
+        margin-bottom: 12px;
+        font-size: 0.78rem;
+        line-height: 1.35;
+      }
+
+      #player-entry {
+        margin-bottom: 0;
+      }
+
+      #player-entry label {
+        margin-bottom: 5px;
+        font-size: 0.68rem;
+      }
+
+      .player-entry-row {
+        grid-template-columns: minmax(0, 1fr) 112px;
+        gap: 7px;
+      }
+
+      #player-name,
+      #start-btn {
+        min-height: 44px;
+        padding: 9px 11px;
+        border-radius: 13px;
+        font-size: 0.88rem;
+      }
+
+      #start-btn {
+        width: 112px;
+        min-width: 0;
+      }
+
+      .iphone-note {
+        display: none;
+      }
+
+      #name-error {
+        min-height: 14px;
+        margin-top: 3px;
+        font-size: 0.65rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="app-shell">
+    <header id="compact-hud" aria-label="Game status">
+      <div class="hud-topline">
+        <div id="objective-display" aria-live="polite">Ready to explore</div>
+        <div id="player-chip" class="player-chip" hidden></div>
+        <div id="timer-display">0:00</div>
+      </div>
+      <div class="mini-meters">
+        <div class="mini-meter"><span>Sediment</span><strong id="sed-mini">20%</strong></div>
+        <div class="mini-meter"><span>Nutrients</span><strong id="nut-mini">20%</strong></div>
+        <div class="mini-meter"><span>Seagrass</span><strong id="sea-mini">100%</strong></div>
+      </div>
+    </header>
+
+    <main id="game-layout">
+      <section id="map-container" aria-label="Interactive estuary map">
+        <div id="game-overlay">
+          <img class="overlay-logo" src="https://www.projectseagrass.org/wp-content/uploads/2025/01/PS-updated-logo-colour-black-text-2048x1221.png" alt="Project Seagrass">
+          <div class="overlay-kicker">🌊 Catchment challenge</div>
+          <h1 id="overlay-title">Can you save the meadow?</h1>
+          <p id="overlay-text">
+            Explore a living estuary, make difficult catchment decisions and discover how sediment and nutrients shape the fate of a seagrass meadow.
+          </p>
+          <div id="player-entry">
+            <label for="player-name">Enter your name for the leaderboard</label>
+            <div class="player-entry-row">
+              <input id="player-name" name="player-name" type="text" maxlength="24" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" placeholder="Your name">
+              <button class="primary-btn" id="start-btn" type="button">Start game</button>
+            </div>
+            <div id="name-error" role="alert" aria-live="polite"></div>
+          </div>
+          <p class="iphone-note">On iPhone, open this game from a web address. The Files/Quick Look preview may show the page without running the game code.</p>
+          <noscript><div class="script-warning">JavaScript is not running in this viewer. Open the game from a hosted web address in Safari.</div></noscript>
+        </div>
+
+        <div id="brand-mark" aria-hidden="true"><img src="https://www.projectseagrass.org/wp-content/uploads/2025/01/PS-updated-logo-colour-black-text-2048x1221.png" alt="Project Seagrass"></div>
+        <canvas id="gameCanvas" width="600" height="600"></canvas>
+      </section>
+
+      <aside id="ui-panel">
+        <div class="instruction-box" id="instruction-text">
+          Every activity is presented neutrally. Inspect it, predict the consequence, then commit to reveal what happens.
+        </div>
+
+        <div class="feedback-box" aria-live="polite">
+          <strong>Latest result</strong>
+          <span id="feedback-text">Enter the estuary, then tap an activity to investigate it.</span>
+        </div>
+
+        <h3>Pollution runoff</h3>
+        <div class="meter-box">
+          <div class="meter-label"><span>Sediment Load</span><span id="sed-val">20%</span></div>
+          <div class="progress-bar" role="progressbar" aria-label="Sediment load" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+            <div id="sed-bar" class="progress-fill" style="width:20%; background:#795548"></div>
+          </div>
+        </div>
+
+        <div class="meter-box">
+          <div class="meter-label"><span>Nutrient Load</span><span id="nut-val">20%</span></div>
+          <div class="progress-bar" role="progressbar" aria-label="Nutrient load" aria-valuemin="0" aria-valuemax="100" aria-valuenow="20">
+            <div id="nut-bar" class="progress-fill" style="width:20%; background:#8bc34a"></div>
+          </div>
+        </div>
+
+        <h3>Ecosystem and society</h3>
+        <div class="meter-box" style="background:#e0f2f1; border-color:#b2dfdb">
+          <div class="meter-label"><span style="color:#00695c">Seagrass Health</span><span id="sea-val">100%</span></div>
+          <div class="progress-bar" role="progressbar" aria-label="Seagrass health" aria-valuemin="0" aria-valuemax="100" aria-valuenow="100">
+            <div id="sea-bar" class="progress-fill" style="width:100%; background:#00897b"></div>
+          </div>
+        </div>
+
+        <div class="society-box">
+          🐟 Fish Population: <span id="fish-count">Abundant</span><br>
+          🎣 Fishery Landings: <span id="fish-yield">Profitable</span><br>
+          🏘️ Community: <span id="comm-status">Thriving ✨</span><br>
+          🙂 Fisher: <span id="fisher-mood">Happy</span>
+        </div>
+
+        <div class="legend">
+          A glowing activity tile means it is operating—not that it is beneficial. Tap an active activity again if you think stopping it will improve the estuary.
+        </div>
+
+        <section class="leaderboard-card" aria-labelledby="leaderboard-title">
+          <div class="leaderboard-heading">
+            <h3 id="leaderboard-title">🏆 Leaderboard</h3>
+            <span class="leaderboard-badge">Best time</span>
+          </div>
+          <ol id="leaderboard-list"></ol>
+          <div class="leaderboard-footer">
+            <span id="leaderboard-note">Best time per player, saved on this browser.</span>
+            <button id="clear-leaderboard" type="button">Reset</button>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <button id="sheet-backdrop" type="button" aria-label="Close activity card"></button>
+  <section id="action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" aria-hidden="true">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-heading">
+      <div id="sheet-icon" aria-hidden="true">🌿</div>
+      <div>
+        <h2 id="sheet-title">Activity</h2>
+        <p id="sheet-status">Not currently selected</p>
+      </div>
+    </div>
+    <p id="sheet-prompt">Decide whether this activity will help or harm the estuary. The effect will be revealed only after you commit.</p>
+    <div id="sheet-result" hidden></div>
+    <div id="sheet-actions">
+      <button class="secondary-btn" id="close-sheet" type="button">Cancel</button>
+      <button class="primary-btn" id="confirm-action" type="button">Choose this action</button>
+    </div>
+  </section>
+
+  <script>
+    "use strict";
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+      const mapContainer = document.getElementById("map-container");
+      const startBtn = document.getElementById("start-btn");
+      const overlay = document.getElementById("game-overlay");
+      const overlayTitle = document.getElementById("overlay-title");
+      const overlayText = document.getElementById("overlay-text");
+      const objectiveDisplay = document.getElementById("objective-display");
+      const instructionText = document.getElementById("instruction-text");
+      const timerDisplay = document.getElementById("timer-display");
+      const feedbackText = document.getElementById("feedback-text");
+      const playerNameInput = document.getElementById("player-name");
+      const nameError = document.getElementById("name-error");
+      const playerChip = document.getElementById("player-chip");
+      const leaderboardList = document.getElementById("leaderboard-list");
+      const leaderboardNote = document.getElementById("leaderboard-note");
+      const clearLeaderboardButton = document.getElementById("clear-leaderboard");
+
+      const actionSheet = document.getElementById("action-sheet");
+      const sheetBackdrop = document.getElementById("sheet-backdrop");
+      const sheetIcon = document.getElementById("sheet-icon");
+      const sheetTitle = document.getElementById("sheet-title");
+      const sheetStatus = document.getElementById("sheet-status");
+      const sheetPrompt = document.getElementById("sheet-prompt");
+      const sheetResult = document.getElementById("sheet-result");
+      const confirmAction = document.getElementById("confirm-action");
+      const closeSheetButton = document.getElementById("close-sheet");
+
+      const BASE_SEDIMENT = 20;
+      const BASE_NUTRIENTS = 20;
+      const MAX_FISH = 42;
+      const LEADERBOARD_KEY = "projectSeagrassEstuaryLeaderboardV1";
+      const PLAYER_NAME_KEY = "projectSeagrassEstuaryPlayerNameV1";
+
+      let gameState = "ready";
+      let elapsedSeconds = 0;
+      let timerInterval = null;
+      let previousFrameTime = performance.now();
+      let pendingNode = null;
+      let sheetShowingResult = false;
+      let currentPlayerName = "";
+      let currentScoreMarker = null;
+      let inMemoryLeaderboard = [];
+      let storageAvailable = true;
+
+      let currentSediment = BASE_SEDIMENT;
+      let targetSediment = BASE_SEDIMENT;
+      let currentNutrients = BASE_NUTRIENTS;
+      let targetNutrients = BASE_NUTRIENTS;
+      let seagrassHealth = 100;
+      let fish = [];
+      let targetFish = 40;
+
+      const nodes = [
+        { id: "b1", type: "bad", icon: "🪓", x: 120, y: 100, sed: 20, nut: 0, active: false, title: "Deforestation", explanation: "Removing trees exposes soil and increases erosion, allowing more fine sediment to wash into rivers and estuaries." },
+        { id: "b2", type: "bad", icon: "🐄", x: 480, y: 120, sed: 10, nut: 15, active: false, title: "Unfenced cattle", explanation: "Livestock can trample riverbanks and add manure, increasing both suspended sediment and nutrient runoff." },
+        { id: "b3", type: "bad", icon: "🧪", x: 100, y: 250, sed: 0, nut: 20, active: false, title: "Excess fertiliser", explanation: "Surplus fertiliser is carried downstream, stimulating algal growth that reduces the light available to seagrass." },
+        { id: "b4", type: "bad", icon: "🚜", x: 500, y: 260, sed: 20, nut: 0, active: false, title: "Poor soil management", explanation: "Bare or heavily disturbed soils erode more easily, sending muddy runoff through the catchment." },
+        { id: "b5", type: "bad", icon: "🏭", x: 150, y: 380, sed: 10, nut: 15, active: false, title: "Industrial discharge", explanation: "Poorly controlled discharges can add nutrients and suspended material, degrading water quality downstream." },
+        { id: "b6", type: "bad", icon: "🏗️", x: 535, y: 345, sed: 25, nut: 0, active: false, title: "Coastal construction", explanation: "Dredging and disturbed coastal sediments can create turbid water and bury seagrass leaves and shoots." },
+        { id: "g1", type: "good", icon: "🌲", x: 220, y: 90, sed: -20, nut: -5, active: false, title: "Plant riparian forest", explanation: "Trees and riverside vegetation stabilise soil and intercept sediment and nutrients before they reach the water." },
+        { id: "g2", type: "good", icon: "🚧", x: 380, y: 150, sed: -10, nut: -15, active: false, title: "Install livestock fencing", explanation: "Keeping livestock away from waterways protects riverbanks and reduces direct inputs of manure and sediment." },
+        { id: "g3", type: "good", icon: "🌊", x: 100, y: 480, sed: -15, nut: -15, active: false, title: "Restore wetlands", explanation: "Wetlands slow water, trap particles and process nutrients before runoff reaches the estuary." },
+        { id: "g4", type: "good", icon: "🌻", x: 200, y: 200, sed: 0, nut: -25, active: false, title: "Use smarter farming", explanation: "Applying the right amount of fertiliser at the right time reduces nutrient losses while maintaining food production." },
+        { id: "g5", type: "good", icon: "🌾", x: 400, y: 280, sed: -15, nut: 0, active: false, title: "Plant cover crops", explanation: "Vegetation covering fields between crops protects soil from rainfall and reduces erosion." },
+        { id: "g6", type: "good", icon: "♻️", x: 250, y: 320, sed: 0, nut: -20, active: false, title: "Improve water treatment", explanation: "Better wastewater treatment removes more nitrogen and phosphorus before water is released." },
+        { id: "g7", type: "good", icon: "🛑", x: 380, y: 440, sed: -20, nut: 0, active: false, title: "Enforce coastal zoning", explanation: "Careful zoning keeps high-impact development and dredging away from vulnerable seagrass habitat." }
+      ];
+
+      class Fish {
+        constructor(isBig = false) {
+          this.isBig = isBig;
+          this.x = 100 + Math.random() * 400;
+          this.y = 470 + Math.random() * 105;
+          this.vx = (Math.random() < 0.5 ? -1 : 1) * (this.isBig ? 20 : 35 + Math.random() * 25);
+          this.size = this.isBig ? 8 + Math.random() * 4 : 3 + Math.random() * 3;
+          this.color = this.isBig ? "#90a4ae" : "#cfd8dc";
+        }
+
+        update(deltaSeconds) {
+          this.x += this.vx * deltaSeconds;
+          if (this.x < 90) {
+            this.x = 90;
+            this.vx = Math.abs(this.vx);
+          } else if (this.x > 510) {
+            this.x = 510;
+            this.vx = -Math.abs(this.vx);
+          }
+        }
+
+        draw() {
+          ctx.fillStyle = this.color;
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.scale(2, 1);
+          ctx.beginPath();
+          ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          const tailDirection = this.vx > 0 ? -1 : 1;
+          ctx.beginPath();
+          ctx.moveTo(this.x, this.y);
+          ctx.lineTo(this.x + tailDirection * this.size * 2.1, this.y - this.size);
+          ctx.lineTo(this.x + tailDirection * this.size * 2.1, this.y + this.size);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      function seedFish(count = 30) {
+        fish = [];
+        for (let i = 0; i < count; i += 1) fish.push(new Fish(Math.random() > 0.8));
+      }
+
+      function formatTime(totalSeconds) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
+      }
+
+
+      function normalisePlayerName(value) {
+        return value.trim().replace(/\s+/g, " ").slice(0, 24);
+      }
+
+      function readLeaderboard() {
+        if (!storageAvailable) return [...inMemoryLeaderboard];
+        try {
+          const raw = window.localStorage.getItem(LEADERBOARD_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(parsed)) return [];
+          return parsed
+            .filter(item => item && typeof item.name === "string" && Number.isFinite(item.seconds))
+            .map(item => ({
+              name: normalisePlayerName(item.name),
+              seconds: Math.max(0, Math.round(item.seconds)),
+              updatedAt: Number.isFinite(item.updatedAt) ? item.updatedAt : 0
+            }))
+            .filter(item => item.name)
+            .sort((a, b) => a.seconds - b.seconds || a.updatedAt - b.updatedAt)
+            .slice(0, 10);
+        } catch (error) {
+          storageAvailable = false;
+          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+          return [...inMemoryLeaderboard];
+        }
+      }
+
+      function writeLeaderboard(entries) {
+        const cleanEntries = entries
+          .sort((a, b) => a.seconds - b.seconds || a.updatedAt - b.updatedAt)
+          .slice(0, 10);
+        inMemoryLeaderboard = [...cleanEntries];
+
+        if (!storageAvailable) return;
+        try {
+          window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(cleanEntries));
+        } catch (error) {
+          storageAvailable = false;
+          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+        }
+      }
+
+      function renderLeaderboard() {
+        const entries = readLeaderboard();
+        leaderboardList.textContent = "";
+
+        if (entries.length === 0) {
+          const empty = document.createElement("li");
+          empty.className = "leaderboard-empty";
+          empty.textContent = "No completed runs yet. The first restored estuary takes the top spot.";
+          leaderboardList.appendChild(empty);
+          clearLeaderboardButton.hidden = true;
+          return;
+        }
+
+        clearLeaderboardButton.hidden = false;
+        entries.forEach(entry => {
+          const item = document.createElement("li");
+          if (
+            currentScoreMarker &&
+            entry.name.toLocaleLowerCase() === currentScoreMarker.name.toLocaleLowerCase() &&
+            entry.seconds === currentScoreMarker.seconds
+          ) {
+            item.classList.add("current-score");
+          }
+
+          const name = document.createElement("span");
+          name.className = "leaderboard-name";
+          name.textContent = entry.name;
+
+          const time = document.createElement("span");
+          time.className = "leaderboard-time";
+          time.textContent = formatTime(entry.seconds);
+
+          item.append(name, time);
+          leaderboardList.appendChild(item);
+        });
+      }
+
+      function saveScore(name, seconds) {
+        const entries = readLeaderboard();
+        const key = name.toLocaleLowerCase();
+        const existingIndex = entries.findIndex(entry => entry.name.toLocaleLowerCase() === key);
+        let improved = false;
+
+        if (existingIndex === -1) {
+          entries.push({ name, seconds, updatedAt: Date.now() });
+          improved = true;
+        } else if (seconds < entries[existingIndex].seconds) {
+          entries[existingIndex] = { name, seconds, updatedAt: Date.now() };
+          improved = true;
+        }
+
+        writeLeaderboard(entries);
+        const sorted = readLeaderboard();
+        const savedEntry = sorted.find(entry => entry.name.toLocaleLowerCase() === key);
+        currentScoreMarker = savedEntry ? { name: savedEntry.name, seconds: savedEntry.seconds } : null;
+        renderLeaderboard();
+
+        return {
+          improved,
+          bestSeconds: savedEntry ? savedEntry.seconds : seconds,
+          rank: savedEntry ? sorted.findIndex(entry => entry === savedEntry) + 1 : null
+        };
+      }
+
+      function rememberPlayerName(name) {
+        if (!storageAvailable) return;
+        try {
+          window.localStorage.setItem(PLAYER_NAME_KEY, name);
+        } catch (error) {
+          storageAvailable = false;
+          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+        }
+      }
+
+      function loadRememberedPlayerName() {
+        if (!storageAvailable) return "";
+        try {
+          return normalisePlayerName(window.localStorage.getItem(PLAYER_NAME_KEY) || "");
+        } catch (error) {
+          storageAvailable = false;
+          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+          return "";
+        }
+      }
+
+      function startTimer() {
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          if (gameState === "destroy" || gameState === "restore") {
+            elapsedSeconds += 1;
+            timerDisplay.textContent = formatTime(elapsedSeconds);
+          }
+        }, 1000);
+      }
+
+      function nodeIsAvailable() {
+        return gameState === "destroy" || gameState === "restore";
+      }
+
+      function describeEffect(value, label) {
+        if (value > 0) return `${label} ↑ ${Math.abs(value)}`;
+        if (value < 0) return `${label} ↓ ${Math.abs(value)}`;
+        return `${label} ↔`;
+      }
+
+      function calculatePollution() {
+        let totalSediment = BASE_SEDIMENT;
+        let totalNutrients = BASE_NUTRIENTS;
+
+        nodes.forEach(node => {
+          if (node.active) {
+            totalSediment += node.sed;
+            totalNutrients += node.nut;
+          }
+        });
+
+        targetSediment = Math.max(0, Math.min(100, totalSediment));
+        targetNutrients = Math.max(0, Math.min(100, totalNutrients));
+      }
+
+      function positionNodes() {
+        const scale = mapContainer.clientWidth / 600;
+        nodes.forEach(node => {
+          const button = document.getElementById(`node-${node.id}`);
+          if (!button) return;
+          button.style.left = `${node.x * scale}px`;
+          button.style.top = `${node.y * scale}px`;
+        });
+      }
+
+      function updateNodeVisuals(node) {
+        const button = document.getElementById(`node-${node.id}`);
+        if (!button) return;
+        button.className = "map-node";
+        if (node.active) button.classList.add("active");
+        if (pendingNode === node) button.classList.add("pending");
+        button.disabled = !nodeIsAvailable();
+        button.setAttribute("aria-pressed", String(node.active));
+        button.setAttribute("aria-label", `${node.title}. ${node.active ? "Currently operating" : "Not operating"}. Tap to inspect.`);
+      }
+
+      function refreshAllNodeVisuals() {
+        nodes.forEach(updateNodeVisuals);
+      }
+
+      function closeActionSheet() {
+        actionSheet.classList.remove("open");
+        sheetBackdrop.classList.remove("open");
+        actionSheet.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("sheet-open");
+        pendingNode = null;
+        sheetShowingResult = false;
+        refreshAllNodeVisuals();
+      }
+
+      function openActionSheet(node) {
+        pendingNode = node;
+        sheetShowingResult = false;
+        sheetIcon.textContent = node.icon;
+        sheetTitle.textContent = node.title;
+        sheetStatus.textContent = node.active ? "This activity is currently operating" : "This activity is not currently operating";
+        sheetPrompt.textContent = node.active
+          ? "Would stopping this activity improve or worsen conditions? Its effect will remain hidden until you commit."
+          : "Would introducing this activity improve or worsen conditions? Its effect will remain hidden until you commit.";
+        sheetPrompt.hidden = false;
+        sheetResult.hidden = true;
+        sheetResult.innerHTML = "";
+        confirmAction.hidden = false;
+        confirmAction.textContent = node.active ? "Stop this action" : "Choose this action";
+        closeSheetButton.textContent = "Cancel";
+
+        actionSheet.classList.add("open");
+        sheetBackdrop.classList.add("open");
+        actionSheet.setAttribute("aria-hidden", "false");
+        document.body.classList.add("sheet-open");
+        refreshAllNodeVisuals();
+        window.setTimeout(() => confirmAction.focus(), 50);
+      }
+
+      function confirmPendingAction() {
+        if (!pendingNode || !nodeIsAvailable()) return;
+
+        const node = pendingNode;
+        node.active = !node.active;
+        calculatePollution();
+        refreshAllNodeVisuals();
+        updateRecoveryObjective();
+
+        const multiplier = node.active ? 1 : -1;
+        const verb = node.active ? "Introduced" : "Stopped";
+        const sedimentEffect = node.sed * multiplier;
+        const nutrientEffect = node.nut * multiplier;
+        const effectText = `${describeEffect(sedimentEffect, "Sediment")} · ${describeEffect(nutrientEffect, "Nutrients")}`;
+
+        feedbackText.innerHTML = `<strong>${verb}: ${node.title}</strong><span class="effect-line">${effectText}</span>${node.explanation}`;
+        sheetResult.innerHTML = `<strong>${verb}: ${node.title}</strong><span class="effect-line">${effectText}</span>${node.explanation}`;
+        sheetResult.hidden = false;
+        sheetPrompt.hidden = true;
+        confirmAction.hidden = true;
+        closeSheetButton.textContent = "Continue";
+        sheetStatus.textContent = node.active ? "Now operating" : "Now stopped";
+        sheetShowingResult = true;
+
+        if (navigator.vibrate) navigator.vibrate(20);
+        closeSheetButton.focus();
+      }
+
+      function setupNodes() {
+        nodes.forEach(node => {
+          const button = document.createElement("button");
+          button.id = `node-${node.id}`;
+          button.type = "button";
+          button.textContent = node.icon;
+          button.addEventListener("click", () => {
+            if (nodeIsAvailable()) openActionSheet(node);
+          });
+          mapContainer.appendChild(button);
+        });
+        refreshAllNodeVisuals();
+        positionNodes();
+      }
+
+      function resetGame() {
+        clearInterval(timerInterval);
+        closeActionSheet();
+        gameState = "ready";
+        elapsedSeconds = 0;
+        timerDisplay.textContent = "0:00";
+        currentSediment = BASE_SEDIMENT;
+        targetSediment = BASE_SEDIMENT;
+        currentNutrients = BASE_NUTRIENTS;
+        targetNutrients = BASE_NUTRIENTS;
+        seagrassHealth = 100;
+        targetFish = 40;
+        seedFish(30);
+        nodes.forEach(node => { node.active = false; });
+        calculatePollution();
+        refreshAllNodeVisuals();
+        feedbackText.textContent = "Enter the estuary, then tap an activity to investigate it.";
+        updateMeters();
+        updateSociety();
+      }
+
+      function startGame() {
+        const enteredName = normalisePlayerName(playerNameInput.value);
+        if (!enteredName) {
+          nameError.textContent = "Please enter a player name before starting.";
+          playerNameInput.setAttribute("aria-invalid", "true");
+          playerNameInput.focus();
+          return;
+        }
+
+        currentPlayerName = enteredName;
+        currentScoreMarker = null;
+        playerNameInput.value = enteredName;
+        playerNameInput.removeAttribute("aria-invalid");
+        nameError.textContent = "";
+        rememberPlayerName(enteredName);
+
+        resetGame();
+        playerChip.textContent = `👤 ${enteredName}`;
+        playerChip.hidden = false;
+        overlay.style.display = "none";
+        gameState = "destroy";
+        objectiveDisplay.textContent = "PHASE 1: Make the meadow collapse";
+        objectiveDisplay.style.color = "#ffd54f";
+        instructionText.textContent = "Tap an activity to identify it. Decide whether introducing it will damage the estuary, then confirm to reveal the effect.";
+        refreshAllNodeVisuals();
+        startTimer();
+      }
+
+      function getRecoveryStatus() {
+        const remainingPressures = nodes.filter(node => node.type === "bad" && node.active).length;
+        const missingRecoveryActions = nodes.filter(node => node.type === "good" && !node.active).length;
+        const activeRecoveryActions = nodes.filter(node => node.type === "good" && node.active).length;
+        return { remainingPressures, missingRecoveryActions, activeRecoveryActions };
+      }
+
+      function updateRecoveryObjective() {
+        if (gameState !== "restore") return;
+        const { remainingPressures, missingRecoveryActions } = getRecoveryStatus();
+        const threatWord = remainingPressures === 1 ? "threat" : "threats";
+        const actionWord = missingRecoveryActions === 1 ? "action" : "actions";
+        objectiveDisplay.textContent = `PHASE 2: ${remainingPressures} ${threatWord} left · ${missingRecoveryActions} recovery ${actionWord} needed`;
+      }
+
+      function enterRestorePhase() {
+        gameState = "restore";
+        seagrassHealth = 0;
+        closeActionSheet();
+        objectiveDisplay.style.color = "#69f0ae";
+        instructionText.textContent = "Full recovery requires three things: restore seagrass health, stop every damaging pressure and activate every recovery measure.";
+        feedbackText.textContent = "The meadow has collapsed. Remove all threats and introduce all recovery actions so the whole catchment supports recovery.";
+        refreshAllNodeVisuals();
+        updateRecoveryObjective();
+      }
+
+      function endGame() {
+        clearInterval(timerInterval);
+        gameState = "won";
+        closeActionSheet();
+        refreshAllNodeVisuals();
+
+        const { activeRecoveryActions, remainingPressures } = getRecoveryStatus();
+        const score = saveScore(currentPlayerName || "Player", elapsedSeconds);
+        const rankingText = score.rank
+          ? `Your best time is now <strong>${formatTime(score.bestSeconds)}</strong>, placing you <strong>#${score.rank}</strong> on this device.`
+          : `Your time has been recorded on this device.`;
+        const improvementText = score.improved
+          ? rankingText
+          : `This run was <strong>${formatTime(elapsedSeconds)}</strong>. ${rankingText}`;
+
+        overlay.style.display = "flex";
+        overlayTitle.textContent = "Estuary Restored! 🎉";
+        overlayTitle.style.color = "#dfffee";
+        overlayText.innerHTML = `<strong>${currentPlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>${improvementText}<br><br>You stopped every damaging pressure and activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to reach full health.`;
+        startBtn.textContent = "Play Again";
+        playerNameInput.value = currentPlayerName;
+      }
+
+      function updateMeters() {
+        const sedimentRounded = Math.round(currentSediment);
+        const nutrientsRounded = Math.round(currentNutrients);
+        const healthRounded = Math.round(seagrassHealth);
+
+        document.getElementById("sed-val").textContent = `${sedimentRounded}%`;
+        document.getElementById("sed-mini").textContent = `${sedimentRounded}%`;
+        document.getElementById("sed-bar").style.width = `${currentSediment}%`;
+        document.getElementById("sed-bar").parentElement.setAttribute("aria-valuenow", String(sedimentRounded));
+
+        document.getElementById("nut-val").textContent = `${nutrientsRounded}%`;
+        document.getElementById("nut-mini").textContent = `${nutrientsRounded}%`;
+        document.getElementById("nut-bar").style.width = `${currentNutrients}%`;
+        document.getElementById("nut-bar").parentElement.setAttribute("aria-valuenow", String(nutrientsRounded));
+
+        document.getElementById("sea-val").textContent = `${healthRounded}%`;
+        document.getElementById("sea-mini").textContent = `${healthRounded}%`;
+        document.getElementById("sea-bar").style.width = `${seagrassHealth}%`;
+        document.getElementById("sea-bar").parentElement.setAttribute("aria-valuenow", String(healthRounded));
+      }
+
+      function updateSociety() {
+        const fishCount = fish.length;
+        const fishEl = document.getElementById("fish-count");
+        const yieldEl = document.getElementById("fish-yield");
+        const communityEl = document.getElementById("comm-status");
+
+        if (fishCount === 0) {
+          fishEl.textContent = "Depleted (0)";
+          yieldEl.textContent = "Collapsed";
+          communityEl.textContent = "Struggling 📉";
+        } else if (fishCount < 12) {
+          fishEl.textContent = `Low (${fishCount})`;
+          yieldEl.textContent = "Poor";
+          communityEl.textContent = "Under pressure ⚠️";
+        } else if (fishCount < 25) {
+          fishEl.textContent = `Recovering (${fishCount})`;
+          yieldEl.textContent = "Improving";
+          communityEl.textContent = "Stabilising ⛺";
+        } else {
+          fishEl.textContent = `Abundant (${fishCount})`;
+          yieldEl.textContent = "Profitable";
+          communityEl.textContent = "Thriving 🏘️✨";
+        }
+
+        const moodEl = document.getElementById("fisher-mood");
+        if (seagrassHealth >= 65) {
+          moodEl.textContent = "Happy 🙂";
+        } else if (seagrassHealth >= 35) {
+          moodEl.textContent = "Worried 😟";
+        } else {
+          moodEl.textContent = "Sad ☹️";
+        }
+      }
+
+      function updateEcosystem(deltaSeconds) {
+        const smoothing = 1 - Math.exp(-3.5 * deltaSeconds);
+        currentSediment += (targetSediment - currentSediment) * smoothing;
+        currentNutrients += (targetNutrients - currentNutrients) * smoothing;
+
+        if (gameState === "destroy" || gameState === "restore") {
+          const combinedPressure = currentSediment + currentNutrients;
+          const healthChangePerSecond = (100 - combinedPressure) * 0.10;
+          seagrassHealth += healthChangePerSecond * deltaSeconds;
+          seagrassHealth = Math.max(0, Math.min(100, seagrassHealth));
+        }
+
+        if (gameState === "destroy" && seagrassHealth <= 0.05) {
+          enterRestorePhase();
+        } else if (gameState === "restore" && seagrassHealth >= 99.5) {
+          const { remainingPressures, missingRecoveryActions } = getRecoveryStatus();
+          seagrassHealth = 100;
+          updateMeters();
+
+          if (remainingPressures === 0 && missingRecoveryActions === 0) {
+            endGame();
+          }
+        }
+
+        targetFish = seagrassHealth > 20
+          ? Math.min(MAX_FISH, Math.floor((seagrassHealth - 20) * 0.53))
+          : 0;
+
+        if (fish.length < targetFish && Math.random() < deltaSeconds * 5) {
+          fish.push(new Fish(seagrassHealth > 60 && Math.random() > 0.8));
+        } else if (fish.length > targetFish && fish.length > 0 && Math.random() < deltaSeconds * 10) {
+          fish.pop();
+        }
+
+        updateMeters();
+        updateSociety();
+      }
+
+      function drawRiverMap() {
+        ctx.beginPath();
+        ctx.moveTo(242, 0);
+        ctx.lineTo(358, 0);
+        ctx.bezierCurveTo(352, 110, 365, 248, 390, 395);
+        ctx.bezierCurveTo(445, 475, 526, 544, 600, 600);
+        ctx.lineTo(0, 600);
+        ctx.bezierCurveTo(80, 548, 164, 478, 213, 397);
+        ctx.bezierCurveTo(238, 254, 248, 112, 242, 0);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function drawBanks() {
+        const landGradient = ctx.createLinearGradient(0, 0, 600, 600);
+        landGradient.addColorStop(0, "#b8dda0");
+        landGradient.addColorStop(0.55, "#8fc683");
+        landGradient.addColorStop(1, "#5f9c72");
+        ctx.fillStyle = landGradient;
+        ctx.fillRect(0, 0, 600, 600);
+
+        ctx.fillStyle = "rgba(255,255,255,0.10)";
+        for (let i = 0; i < 15; i += 1) {
+          const x = (i * 83 + 37) % 600;
+          const y = (i * 137 + 51) % 430;
+          ctx.beginPath();
+          ctx.arc(x, y, 10 + (i % 4) * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.strokeStyle = "rgba(32,92,68,0.16)";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 5; i += 1) {
+          ctx.beginPath();
+          ctx.moveTo(8, 70 + i * 82);
+          ctx.bezierCurveTo(85, 45 + i * 84, 150, 105 + i * 70, 225, 80 + i * 78);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(592, 68 + i * 86);
+          ctx.bezierCurveTo(520, 42 + i * 82, 465, 112 + i * 72, 375, 82 + i * 78);
+          ctx.stroke();
+        }
+      }
+
+
+      function drawWaterDetails() {
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.strokeStyle = "#d8ffff";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+        const waveOffset = (Date.now() / 65) % 55;
+        for (let y = 70; y < 500; y += 52) {
+          ctx.beginPath();
+          for (let x = 150 - waveOffset; x < 520; x += 55) {
+            const channelWidth = 54 + y * 0.34;
+            if (Math.abs(x - 300) < channelWidth) {
+              ctx.moveTo(x, y);
+              ctx.quadraticCurveTo(x + 12, y - 4, x + 24, y);
+            }
+          }
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        const particleCount = Math.floor(currentSediment * 0.22);
+        ctx.fillStyle = "rgba(184,132,77,0.28)";
+        for (let i = 0; i < particleCount; i += 1) {
+          const y = 90 + ((i * 47 + Math.floor(Date.now() / 90)) % 430);
+          const width = 52 + y * 0.35;
+          const x = 300 + Math.sin(i * 7.3) * width * 0.78;
+          ctx.beginPath();
+          ctx.arc(x, y, 1.2 + (i % 3) * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawSeagrass() {
+        const time = Date.now() / 800;
+        const visibleBlades = Math.ceil(seagrassHealth * 0.6);
+
+        for (let i = 0; i < visibleBlades; i += 1) {
+          const baseX = 48 + i * 8.7;
+          const baseY = 606;
+          const height = 35 + seagrassHealth * 1.7 + Math.sin(i) * 16;
+          const sway = Math.sin(time + i * 0.7) * 14;
+          const hue = Math.floor(35 + seagrassHealth * 0.75 + (i % 3) * 8);
+          const saturation = Math.floor(30 + seagrassHealth * 0.3);
+          const lightness = Math.floor(20 + seagrassHealth / 4);
+
+          ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+          ctx.globalAlpha = 0.86;
+          ctx.beginPath();
+          ctx.moveTo(baseX, baseY);
+          ctx.quadraticCurveTo(baseX + sway - 5, baseY - height / 2, baseX + sway / 2, baseY - height);
+          ctx.quadraticCurveTo(baseX + sway + 5, baseY - height / 2, baseX + 8, baseY);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
+      function drawFisher() {
+        const x = 470;
+        const y = 468;
+        const scale = 1.42;
+        const health = Math.max(0, Math.min(100, seagrassHealth));
+        const mood = health >= 65 ? "happy" : health >= 35 ? "worried" : "sad";
+        const slump = mood === "sad" ? 7 : mood === "worried" ? 3 : 0;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+
+        // Soft shadow and a small timber platform.
+        ctx.fillStyle = "rgba(3,35,38,0.18)";
+        ctx.beginPath();
+        ctx.ellipse(0, 28, 39, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#754d34";
+        ctx.fillRect(-37, 15, 74, 10);
+        ctx.fillStyle = "#4d3428";
+        ctx.fillRect(-29, 24, 7, 29);
+        ctx.fillRect(22, 24, 7, 29);
+        ctx.strokeStyle = "rgba(255,255,255,0.17)";
+        ctx.lineWidth = 1;
+        for (let board = -30; board <= 30; board += 15) {
+          ctx.beginPath();
+          ctx.moveTo(board, 16);
+          ctx.lineTo(board, 24);
+          ctx.stroke();
+        }
+
+        // Fishing rod and line.
+        ctx.strokeStyle = "#3c2d25";
+        ctx.lineWidth = 3.2;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-5, -36 + slump);
+        ctx.quadraticCurveTo(-33, -58 + slump, -69, -54 + slump);
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(241,255,255,0.7)";
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.moveTo(-69, -54 + slump);
+        ctx.lineTo(-69, 37);
+        ctx.stroke();
+
+        // Legs and boots.
+        ctx.strokeStyle = "#183843";
+        ctx.lineWidth = 9;
+        ctx.beginPath();
+        ctx.moveTo(-8, -1 + slump);
+        ctx.lineTo(-12, 17);
+        ctx.moveTo(9, -1 + slump);
+        ctx.lineTo(13, 17);
+        ctx.stroke();
+        ctx.strokeStyle = "#14272d";
+        ctx.lineWidth = 7;
+        ctx.beginPath();
+        ctx.moveTo(-12, 18);
+        ctx.lineTo(-20, 18);
+        ctx.moveTo(13, 18);
+        ctx.lineTo(21, 18);
+        ctx.stroke();
+
+        // Body and arms; posture droops as the meadow declines.
+        ctx.fillStyle = mood === "sad" ? "#d0a83d" : "#f2cf3c";
+        ctx.beginPath();
+        ctx.roundRect(-18, -49 + slump, 36, 48, 9);
+        ctx.fill();
+
+        ctx.strokeStyle = mood === "sad" ? "#c49a2c" : "#f2cf3c";
+        ctx.lineWidth = 9;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(-12, -39 + slump);
+        ctx.lineTo(-27, -27 + slump * 1.2);
+        ctx.moveTo(12, -39 + slump);
+        ctx.lineTo(24, -24 + slump * 1.25);
+        ctx.stroke();
+
+        // Neck and face.
+        ctx.fillStyle = "#efb77d";
+        ctx.fillRect(-5, -58 + slump, 10, 10);
+        ctx.beginPath();
+        ctx.arc(0, -72 + slump, 18, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hair and hat.
+        ctx.fillStyle = "#5c3b2b";
+        ctx.beginPath();
+        ctx.arc(0, -76 + slump, 18, Math.PI, Math.PI * 2);
+        ctx.lineTo(16, -70 + slump);
+        ctx.lineTo(-16, -70 + slump);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#0c766e";
+        ctx.beginPath();
+        ctx.arc(0, -80 + slump, 20, Math.PI, Math.PI * 2);
+        ctx.lineTo(20, -77 + slump);
+        ctx.lineTo(-20, -77 + slump);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(-24, -79 + slump, 48, 4);
+
+        // Eyes and eyebrows.
+        const eyeY = -73 + slump;
+        ctx.strokeStyle = "#382b28";
+        ctx.fillStyle = "#382b28";
+        ctx.lineWidth = 1.8;
+
+        if (mood === "happy") {
+          ctx.beginPath();
+          ctx.arc(-6, eyeY, 3.1, 0.15 * Math.PI, 0.85 * Math.PI);
+          ctx.arc(6, eyeY, 3.1, 0.15 * Math.PI, 0.85 * Math.PI);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(-6, eyeY, 1.6, 0, Math.PI * 2);
+          ctx.arc(6, eyeY, 1.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.beginPath();
+          if (mood === "sad") {
+            ctx.moveTo(-11, eyeY - 6);
+            ctx.lineTo(-3, eyeY - 4);
+            ctx.moveTo(3, eyeY - 4);
+            ctx.lineTo(11, eyeY - 6);
+          } else {
+            ctx.moveTo(-11, eyeY - 5);
+            ctx.lineTo(-3, eyeY - 7);
+            ctx.moveTo(3, eyeY - 7);
+            ctx.lineTo(11, eyeY - 5);
+          }
+          ctx.stroke();
+        }
+
+        // Mouth transitions from smile to flat to frown.
+        ctx.strokeStyle = "#8b3f38";
+        ctx.lineWidth = 2.3;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        if (mood === "happy") {
+          ctx.moveTo(-7, -64 + slump);
+          ctx.quadraticCurveTo(0, -57 + slump, 7, -64 + slump);
+        } else if (mood === "worried") {
+          ctx.moveTo(-7, -62 + slump);
+          ctx.quadraticCurveTo(0, -63 + slump, 7, -62 + slump);
+        } else {
+          ctx.moveTo(-7, -59 + slump);
+          ctx.quadraticCurveTo(0, -67 + slump, 7, -59 + slump);
+        }
+        ctx.stroke();
+
+        // Small mood badge makes the state legible on very small screens.
+        ctx.fillStyle = "rgba(255,255,255,0.9)";
+        ctx.beginPath();
+        ctx.arc(27, -91 + slump, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = "13px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#173f42";
+        ctx.fillText(mood === "happy" ? "🙂" : mood === "worried" ? "😟" : "☹️", 27, -90 + slump);
+
+        ctx.restore();
+      }
+
+      function drawScene(deltaSeconds) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBanks();
+
+        const pollution = Math.min(1, (currentSediment + currentNutrients) / 200);
+        const waterGradient = ctx.createLinearGradient(170, 0, 430, 600);
+        const cleanTop = [97, 210, 211];
+        const dirtyTop = [155, 159, 111];
+        const cleanBottom = [16, 121, 139];
+        const dirtyBottom = [83, 92, 74];
+        const mix = (a, b) => Math.round(a + (b - a) * pollution);
+        waterGradient.addColorStop(0, `rgb(${mix(cleanTop[0], dirtyTop[0])}, ${mix(cleanTop[1], dirtyTop[1])}, ${mix(cleanTop[2], dirtyTop[2])})`);
+        waterGradient.addColorStop(1, `rgb(${mix(cleanBottom[0], dirtyBottom[0])}, ${mix(cleanBottom[1], dirtyBottom[1])}, ${mix(cleanBottom[2], dirtyBottom[2])})`);
+        ctx.fillStyle = waterGradient;
+        drawRiverMap();
+
+        ctx.save();
+        ctx.globalAlpha = 0.18;
+        ctx.strokeStyle = "#eaffff";
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(272, 0);
+        ctx.bezierCurveTo(274, 148, 277, 294, 252, 424);
+        ctx.bezierCurveTo(220, 490, 150, 555, 74, 600);
+        ctx.stroke();
+        ctx.restore();
+
+        drawWaterDetails();
+        fish.forEach(item => {
+          item.update(deltaSeconds);
+          item.draw();
+        });
+        drawSeagrass();
+        drawFisher();
+      }
+
+      function gameLoop(frameTime) {
+        const deltaSeconds = Math.min(0.05, Math.max(0, (frameTime - previousFrameTime) / 1000));
+        previousFrameTime = frameTime;
+        updateEcosystem(deltaSeconds);
+        drawScene(deltaSeconds);
+        requestAnimationFrame(gameLoop);
+      }
+
+      let startTouchLocked = false;
+
+      function handleStartInteraction(event) {
+        if (event && event.type === "touchend") event.preventDefault();
+        if (startTouchLocked) return;
+        startTouchLocked = true;
+        window.setTimeout(() => { startTouchLocked = false; }, 450);
+        startGame();
+      }
+
+      // Standard click plus an explicit iOS touch fallback.
+      startBtn.addEventListener("click", handleStartInteraction);
+      startBtn.addEventListener("touchend", handleStartInteraction, { passive: false });
+      window.startSeagrassGame = handleStartInteraction;
+
+      playerNameInput.addEventListener("input", () => {
+        nameError.textContent = "";
+        playerNameInput.removeAttribute("aria-invalid");
+      });
+      playerNameInput.addEventListener("keydown", event => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          handleStartInteraction(event);
+        }
+      });
+
+      clearLeaderboardButton.addEventListener("click", () => {
+        if (!window.confirm("Clear all locally saved leaderboard scores?")) return;
+        currentScoreMarker = null;
+        inMemoryLeaderboard = [];
+        if (storageAvailable) {
+          try {
+            window.localStorage.removeItem(LEADERBOARD_KEY);
+          } catch (error) {
+            storageAvailable = false;
+          }
+        }
+        renderLeaderboard();
+      });
+
+      confirmAction.addEventListener("click", confirmPendingAction);
+      closeSheetButton.addEventListener("click", () => {
+        if (sheetShowingResult || pendingNode) closeActionSheet();
+      });
+      sheetBackdrop.addEventListener("click", closeActionSheet);
+      document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && actionSheet.classList.contains("open")) closeActionSheet();
+      });
+
+      if ("ResizeObserver" in window) {
+        new ResizeObserver(positionNodes).observe(mapContainer);
+      } else {
+        window.addEventListener("resize", positionNodes);
+      }
+
+      playerNameInput.value = loadRememberedPlayerName();
+      renderLeaderboard();
+
+      seedFish(30);
+      setupNodes();
+      calculatePollution();
+      updateMeters();
+      updateSociety();
+      requestAnimationFrame(gameLoop);
+    });
+  </script>
+</body>
+</html>
