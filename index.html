@@ -940,7 +940,7 @@
       line-height: 1.35;
     }
 
-    #clear-leaderboard {
+    #refresh-leaderboard {
       border: 0;
       padding: 4px 0;
       color: #5a777a;
@@ -1041,6 +1041,15 @@
       }
     }
 
+
+
+    #refresh-leaderboard:disabled,
+    #start-btn:disabled {
+      cursor: wait;
+      opacity: 0.68;
+      transform: none;
+    }
+
   </style>
 </head>
 <body>
@@ -1068,7 +1077,7 @@
             Explore a living estuary, make difficult catchment decisions and discover how sediment and nutrients shape the fate of a seagrass meadow.
           </p>
           <div id="player-entry">
-            <label for="player-name">Enter your name for the leaderboard</label>
+            <label for="player-name">Enter your name for the global leaderboard</label>
             <div class="player-entry-row">
               <input id="player-name" name="player-name" type="text" maxlength="24" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" placeholder="Your name">
               <button class="primary-btn" id="start-btn" type="button">Start game</button>
@@ -1129,13 +1138,13 @@
 
         <section class="leaderboard-card" aria-labelledby="leaderboard-title">
           <div class="leaderboard-heading">
-            <h3 id="leaderboard-title">🏆 Leaderboard</h3>
-            <span class="leaderboard-badge">Best time</span>
+            <h3 id="leaderboard-title">🏆 Global leaderboard</h3>
+            <span class="leaderboard-badge">Global best</span>
           </div>
           <ol id="leaderboard-list"></ol>
           <div class="leaderboard-footer">
-            <span id="leaderboard-note">Best time per player, saved on this browser.</span>
-            <button id="clear-leaderboard" type="button">Reset</button>
+            <span id="leaderboard-note" aria-live="polite">Loading the shared leaderboard…</span>
+            <button id="refresh-leaderboard" type="button">Refresh</button>
           </div>
         </section>
       </aside>
@@ -1160,6 +1169,7 @@
     </div>
   </section>
 
+  <script src="config.js"></script>
   <script>
     "use strict";
 
@@ -1180,7 +1190,7 @@
       const playerChip = document.getElementById("player-chip");
       const leaderboardList = document.getElementById("leaderboard-list");
       const leaderboardNote = document.getElementById("leaderboard-note");
-      const clearLeaderboardButton = document.getElementById("clear-leaderboard");
+      const refreshLeaderboardButton = document.getElementById("refresh-leaderboard");
 
       const actionSheet = document.getElementById("action-sheet");
       const sheetBackdrop = document.getElementById("sheet-backdrop");
@@ -1195,8 +1205,8 @@
       const BASE_SEDIMENT = 20;
       const BASE_NUTRIENTS = 20;
       const MAX_FISH = 42;
-      const LEADERBOARD_KEY = "projectSeagrassEstuaryLeaderboardV1";
       const PLAYER_NAME_KEY = "projectSeagrassEstuaryPlayerNameV1";
+      const LEADERBOARD_REFRESH_MS = 30000;
 
       let gameState = "ready";
       let elapsedSeconds = 0;
@@ -1206,8 +1216,11 @@
       let sheetShowingResult = false;
       let currentPlayerName = "";
       let currentScoreMarker = null;
-      let inMemoryLeaderboard = [];
+      let sharedLeaderboard = [];
       let storageAvailable = true;
+      let currentRunId = null;
+      let leaderboardRefreshTimer = null;
+      let isSubmittingScore = false;
 
       let currentSediment = BASE_SEDIMENT;
       let targetSediment = BASE_SEDIMENT;
@@ -1290,59 +1303,83 @@
         return value.trim().replace(/\s+/g, " ").slice(0, 24);
       }
 
-      function readLeaderboard() {
-        if (!storageAvailable) return [...inMemoryLeaderboard];
-        try {
-          const raw = window.localStorage.getItem(LEADERBOARD_KEY);
-          const parsed = raw ? JSON.parse(raw) : [];
-          if (!Array.isArray(parsed)) return [];
-          return parsed
-            .filter(item => item && typeof item.name === "string" && Number.isFinite(item.seconds))
-            .map(item => ({
-              name: normalisePlayerName(item.name),
-              seconds: Math.max(0, Math.round(item.seconds)),
-              updatedAt: Number.isFinite(item.updatedAt) ? item.updatedAt : 0
-            }))
-            .filter(item => item.name)
-            .sort((a, b) => a.seconds - b.seconds || a.updatedAt - b.updatedAt)
-            .slice(0, 10);
-        } catch (error) {
-          storageAvailable = false;
-          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
-          return [...inMemoryLeaderboard];
-        }
+      function escapeHtml(value) {
+        const element = document.createElement("span");
+        element.textContent = String(value ?? "");
+        return element.innerHTML;
       }
 
-      function writeLeaderboard(entries) {
-        const cleanEntries = entries
-          .sort((a, b) => a.seconds - b.seconds || a.updatedAt - b.updatedAt)
-          .slice(0, 10);
-        inMemoryLeaderboard = [...cleanEntries];
+      function getSharedConfig() {
+        const config = window.SEAGRASS_CONFIG || {};
+        return {
+          url: String(config.supabaseUrl || "").trim().replace(/\/+$/, ""),
+          key: String(config.supabasePublishableKey || "").trim()
+        };
+      }
 
-        if (!storageAvailable) return;
-        try {
-          window.localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(cleanEntries));
-        } catch (error) {
-          storageAvailable = false;
-          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+      function sharedLeaderboardIsConfigured() {
+        const { url, key } = getSharedConfig();
+        return /^https:\/\//i.test(url) && key.length > 20 && !url.includes("YOUR_PROJECT") && !key.includes("YOUR_PUBLISHABLE");
+      }
+
+      async function callLeaderboardFunction(functionName, parameters = {}) {
+        const { url, key } = getSharedConfig();
+        if (!sharedLeaderboardIsConfigured()) {
+          throw new Error("The shared leaderboard has not been connected yet. Add your Supabase URL and publishable key to config.js.");
         }
+
+        const response = await fetch(`${url}/rest/v1/rpc/${functionName}`, {
+          method: "POST",
+          headers: {
+            apikey: key,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(parameters)
+        });
+
+        const rawBody = await response.text();
+        let payload = null;
+        if (rawBody) {
+          try {
+            payload = JSON.parse(rawBody);
+          } catch (error) {
+            payload = rawBody;
+          }
+        }
+
+        if (!response.ok) {
+          const message = payload && typeof payload === "object"
+            ? payload.message || payload.details || `Leaderboard request failed (${response.status}).`
+            : String(payload || `Leaderboard request failed (${response.status}).`);
+          throw new Error(message);
+        }
+
+        return payload;
       }
 
       function renderLeaderboard() {
-        const entries = readLeaderboard();
         leaderboardList.textContent = "";
 
-        if (entries.length === 0) {
+        if (!sharedLeaderboardIsConfigured()) {
+          const setup = document.createElement("li");
+          setup.className = "leaderboard-empty";
+          setup.textContent = "Shared leaderboard setup is required. Follow README.md in the download package.";
+          leaderboardList.appendChild(setup);
+          refreshLeaderboardButton.hidden = true;
+          return;
+        }
+
+        refreshLeaderboardButton.hidden = false;
+
+        if (sharedLeaderboard.length === 0) {
           const empty = document.createElement("li");
           empty.className = "leaderboard-empty";
           empty.textContent = "No completed runs yet. The first restored estuary takes the top spot.";
           leaderboardList.appendChild(empty);
-          clearLeaderboardButton.hidden = true;
           return;
         }
 
-        clearLeaderboardButton.hidden = false;
-        entries.forEach(entry => {
+        sharedLeaderboard.forEach(entry => {
           const item = document.createElement("li");
           if (
             currentScoreMarker &&
@@ -1365,30 +1402,63 @@
         });
       }
 
-      function saveScore(name, seconds) {
-        const entries = readLeaderboard();
-        const key = name.toLocaleLowerCase();
-        const existingIndex = entries.findIndex(entry => entry.name.toLocaleLowerCase() === key);
-        let improved = false;
-
-        if (existingIndex === -1) {
-          entries.push({ name, seconds, updatedAt: Date.now() });
-          improved = true;
-        } else if (seconds < entries[existingIndex].seconds) {
-          entries[existingIndex] = { name, seconds, updatedAt: Date.now() };
-          improved = true;
+      async function loadSharedLeaderboard({ silent = false } = {}) {
+        if (!sharedLeaderboardIsConfigured()) {
+          sharedLeaderboard = [];
+          leaderboardNote.textContent = "Connect Supabase in config.js to activate the shared leaderboard.";
+          renderLeaderboard();
+          return;
         }
 
-        writeLeaderboard(entries);
-        const sorted = readLeaderboard();
-        const savedEntry = sorted.find(entry => entry.name.toLocaleLowerCase() === key);
-        currentScoreMarker = savedEntry ? { name: savedEntry.name, seconds: savedEntry.seconds } : null;
-        renderLeaderboard();
+        if (!silent) leaderboardNote.textContent = "Loading shared scores…";
+        refreshLeaderboardButton.disabled = true;
+
+        try {
+          const rows = await callLeaderboardFunction("get_seagrass_leaderboard", { p_limit: 10 });
+          sharedLeaderboard = (Array.isArray(rows) ? rows : [])
+            .filter(row => row && typeof row.player_name === "string" && Number.isFinite(Number(row.best_seconds)))
+            .map(row => ({
+              name: normalisePlayerName(row.player_name),
+              seconds: Math.max(0, Math.round(Number(row.best_seconds)))
+            }))
+            .filter(row => row.name)
+            .sort((a, b) => a.seconds - b.seconds)
+            .slice(0, 10);
+          renderLeaderboard();
+          leaderboardNote.textContent = "Live global scores shared across phones and computers.";
+        } catch (error) {
+          console.error("Could not load shared leaderboard:", error);
+          leaderboardNote.textContent = "The shared leaderboard is temporarily unavailable. Tap Refresh to try again.";
+          renderLeaderboard();
+        } finally {
+          refreshLeaderboardButton.disabled = false;
+        }
+      }
+
+      async function createSharedRun() {
+        const runId = await callLeaderboardFunction("start_seagrass_run");
+        if (typeof runId !== "string" || !runId) {
+          throw new Error("The leaderboard did not return a valid run identifier.");
+        }
+        return runId;
+      }
+
+      async function submitSharedScore(name, runId) {
+        const rows = await callLeaderboardFunction("finish_seagrass_run", {
+          p_run_id: runId,
+          p_player_name: name
+        });
+        const score = Array.isArray(rows) ? rows[0] : rows;
+        if (!score || !Number.isFinite(Number(score.run_seconds))) {
+          throw new Error("The leaderboard did not return a valid score.");
+        }
 
         return {
-          improved,
-          bestSeconds: savedEntry ? savedEntry.seconds : seconds,
-          rank: savedEntry ? sorted.findIndex(entry => entry === savedEntry) + 1 : null
+          playerName: normalisePlayerName(score.player_name || name),
+          runSeconds: Math.max(0, Math.round(Number(score.run_seconds))),
+          bestSeconds: Math.max(0, Math.round(Number(score.best_seconds))),
+          rank: Number.isFinite(Number(score.leaderboard_rank)) ? Math.round(Number(score.leaderboard_rank)) : null,
+          improved: Boolean(score.improved)
         };
       }
 
@@ -1398,7 +1468,7 @@
           window.localStorage.setItem(PLAYER_NAME_KEY, name);
         } catch (error) {
           storageAvailable = false;
-          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+          nameError.textContent = "Your name could not be remembered on this device.";
         }
       }
 
@@ -1408,7 +1478,7 @@
           return normalisePlayerName(window.localStorage.getItem(PLAYER_NAME_KEY) || "");
         } catch (error) {
           storageAvailable = false;
-          leaderboardNote.textContent = "Storage is unavailable; scores will last only for this session.";
+          nameError.textContent = "Your name could not be remembered on this device.";
           return "";
         }
       }
@@ -1571,7 +1641,9 @@
         updateSociety();
       }
 
-      function startGame() {
+      async function startGame() {
+        if (gameState === "submitting" || isSubmittingScore) return;
+
         const enteredName = normalisePlayerName(playerNameInput.value);
         if (!enteredName) {
           nameError.textContent = "Please enter a player name before starting.";
@@ -1580,23 +1652,46 @@
           return;
         }
 
-        currentPlayerName = enteredName;
-        currentScoreMarker = null;
-        playerNameInput.value = enteredName;
-        playerNameInput.removeAttribute("aria-invalid");
-        nameError.textContent = "";
-        rememberPlayerName(enteredName);
+        if (!sharedLeaderboardIsConfigured()) {
+          nameError.textContent = "The shared leaderboard is not connected yet. Complete config.js before publishing the game.";
+          playerNameInput.setAttribute("aria-invalid", "true");
+          return;
+        }
 
-        resetGame();
-        playerChip.textContent = `👤 ${enteredName}`;
-        playerChip.hidden = false;
-        overlay.style.display = "none";
-        gameState = "destroy";
-        objectiveDisplay.textContent = "PHASE 1: Make the meadow collapse";
-        objectiveDisplay.style.color = "#ffd54f";
-        instructionText.textContent = "Tap an activity to identify it. Decide whether introducing it will damage the estuary, then confirm to reveal the effect.";
-        refreshAllNodeVisuals();
-        startTimer();
+        const previousButtonText = startBtn.textContent;
+        startBtn.disabled = true;
+        startBtn.textContent = "Connecting…";
+        nameError.textContent = "Starting a verified online run…";
+
+        try {
+          const newRunId = await createSharedRun();
+
+          currentPlayerName = enteredName;
+          currentScoreMarker = null;
+          playerNameInput.value = enteredName;
+          playerNameInput.removeAttribute("aria-invalid");
+          nameError.textContent = "";
+          rememberPlayerName(enteredName);
+
+          resetGame();
+          currentRunId = newRunId;
+          playerChip.textContent = `👤 ${enteredName}`;
+          playerChip.hidden = false;
+          overlay.style.display = "none";
+          gameState = "destroy";
+          objectiveDisplay.textContent = "PHASE 1: Make the meadow collapse";
+          objectiveDisplay.style.color = "#ffd54f";
+          instructionText.textContent = "Tap an activity to identify it. Decide whether introducing it will damage the estuary, then confirm to reveal the effect.";
+          refreshAllNodeVisuals();
+          startTimer();
+        } catch (error) {
+          console.error("Could not start shared run:", error);
+          nameError.textContent = "Could not connect to the shared leaderboard. Check your internet connection and Supabase setup.";
+          startBtn.textContent = previousButtonText;
+        } finally {
+          startBtn.disabled = false;
+          if (gameState === "destroy") startBtn.textContent = "Start game";
+        }
       }
 
       function getRecoveryStatus() {
@@ -1625,27 +1720,54 @@
         updateRecoveryObjective();
       }
 
-      function endGame() {
+      async function endGame() {
+        if (isSubmittingScore || gameState === "won") return;
+
         clearInterval(timerInterval);
-        gameState = "won";
+        gameState = "submitting";
+        isSubmittingScore = true;
         closeActionSheet();
         refreshAllNodeVisuals();
 
-        const { activeRecoveryActions, remainingPressures } = getRecoveryStatus();
-        const score = saveScore(currentPlayerName || "Player", elapsedSeconds);
-        const rankingText = score.rank
-          ? `Your best time is now <strong>${formatTime(score.bestSeconds)}</strong>, placing you <strong>#${score.rank}</strong> on this device.`
-          : `Your time has been recorded on this device.`;
-        const improvementText = score.improved
-          ? rankingText
-          : `This run was <strong>${formatTime(elapsedSeconds)}</strong>. ${rankingText}`;
-
+        const { activeRecoveryActions } = getRecoveryStatus();
+        const safeCurrentPlayerName = escapeHtml(currentPlayerName);
         overlay.style.display = "flex";
         overlayTitle.textContent = "Estuary Restored! 🎉";
         overlayTitle.style.color = "#dfffee";
-        overlayText.innerHTML = `<strong>${currentPlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>${improvementText}<br><br>You stopped every damaging pressure and activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to reach full health.`;
-        startBtn.textContent = "Play Again";
-        playerNameInput.value = currentPlayerName;
+        overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, your restoration is complete.<br><br>Submitting your verified time to the global leaderboard…`;
+        startBtn.textContent = "Submitting…";
+        startBtn.disabled = true;
+
+        try {
+          if (!currentRunId) throw new Error("This run does not have a valid online run identifier.");
+          const score = await submitSharedScore(currentPlayerName || "Player", currentRunId);
+          elapsedSeconds = score.runSeconds;
+          timerDisplay.textContent = formatTime(score.runSeconds);
+          currentScoreMarker = { name: score.playerName, seconds: score.bestSeconds };
+          await loadSharedLeaderboard({ silent: true });
+
+          const rankingText = score.rank
+            ? `Your global best is <strong>${formatTime(score.bestSeconds)}</strong>, placing you <strong>#${score.rank}</strong>.`
+            : `Your result has been saved to the global leaderboard.`;
+          const improvementText = score.improved
+            ? rankingText
+            : `This run took <strong>${formatTime(score.runSeconds)}</strong>. ${rankingText}`;
+
+          const safeScorePlayerName = escapeHtml(score.playerName);
+          overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you restored the ecosystem in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You stopped every damaging pressure and activated all <strong>${activeRecoveryActions}</strong> recovery measures, allowing the meadow to reach full health.`;
+        } catch (error) {
+          console.error("Could not submit shared score:", error);
+          overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you restored the ecosystem in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Supabase setup before playing again.`;
+          leaderboardNote.textContent = "Score submission failed. Tap Refresh after checking the connection.";
+        } finally {
+          gameState = "won";
+          isSubmittingScore = false;
+          currentRunId = null;
+          refreshAllNodeVisuals();
+          startBtn.textContent = "Play Again";
+          startBtn.disabled = false;
+          playerNameInput.value = currentPlayerName;
+        }
       }
 
       function updateMeters() {
@@ -1723,7 +1845,7 @@
           updateMeters();
 
           if (remainingPressures === 0 && missingRecoveryActions === 0) {
-            endGame();
+            void endGame();
           }
         }
 
@@ -2063,7 +2185,7 @@
         if (startTouchLocked) return;
         startTouchLocked = true;
         window.setTimeout(() => { startTouchLocked = false; }, 450);
-        startGame();
+        void startGame();
       }
 
       // Standard click plus an explicit iOS touch fallback.
@@ -2082,18 +2204,8 @@
         }
       });
 
-      clearLeaderboardButton.addEventListener("click", () => {
-        if (!window.confirm("Clear all locally saved leaderboard scores?")) return;
-        currentScoreMarker = null;
-        inMemoryLeaderboard = [];
-        if (storageAvailable) {
-          try {
-            window.localStorage.removeItem(LEADERBOARD_KEY);
-          } catch (error) {
-            storageAvailable = false;
-          }
-        }
-        renderLeaderboard();
+      refreshLeaderboardButton.addEventListener("click", () => {
+        void loadSharedLeaderboard();
       });
 
       confirmAction.addEventListener("click", confirmPendingAction);
@@ -2113,6 +2225,16 @@
 
       playerNameInput.value = loadRememberedPlayerName();
       renderLeaderboard();
+      void loadSharedLeaderboard();
+      leaderboardRefreshTimer = window.setInterval(() => {
+        if (document.visibilityState === "visible" && gameState !== "submitting") {
+          void loadSharedLeaderboard({ silent: true });
+        }
+      }, LEADERBOARD_REFRESH_MS);
+
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") void loadSharedLeaderboard({ silent: true });
+      });
 
       seedFish(30);
       setupNodes();
