@@ -21,7 +21,7 @@
   --danger: #c96f5d;
   --shadow: 0 14px 34px rgba(18, 63, 56, .14);
   /* Ocean Image Bank seagrass photograph: Michiel Vos / Ocean Image Bank.
-     Replace only this URL to change the page background image. */
+     The photo is shown through body::before. Replace only this URL to change it. */
   --meadow-photo: url("https://images.prismic.io/ocean-agency-cms/5d53515b-8c4d-4be1-a1c6-bc74f7fb8e83_seagrass%2Bcategory.jpg?auto=compress,format&fit=max&w=2400");
 }
 
@@ -29,19 +29,20 @@
 html { -webkit-text-size-adjust: 100%; background: var(--forest); }
 body {
   position: relative;
+  isolation: isolate;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--ink);
-  background: #123f38;
+  background: var(--forest);
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -2;
+  z-index: 0;
   background-image:
     linear-gradient(180deg, rgba(7, 42, 38, .34), rgba(7, 42, 38, .58)),
     var(--meadow-photo);
@@ -53,7 +54,7 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background: radial-gradient(circle at 50% 12%, rgba(255,255,255,.12), transparent 45%);
 }
@@ -62,7 +63,15 @@ button, input { font: inherit; }
 button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 
-#app-shell { min-height: 100vh; min-height: 100dvh; background: rgba(238,245,239,.78); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+#app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: rgba(238,245,239,.74);
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+}
 
 /* One simple header; nothing floats over the map. */
 .site-header {
