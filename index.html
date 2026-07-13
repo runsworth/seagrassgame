@@ -20,25 +20,49 @@
   --sand: #d9b45a;
   --danger: #c96f5d;
   --shadow: 0 14px 34px rgba(18, 63, 56, .14);
+  /* Ocean Image Bank seagrass photograph: Michiel Vos / Ocean Image Bank.
+     Replace only this URL to change the page background image. */
+  --meadow-photo: url("https://images.prismic.io/ocean-agency-cms/5d53515b-8c4d-4be1-a1c6-bc74f7fb8e83_seagrass%2Bcategory.jpg?auto=compress,format&fit=max&w=2400");
 }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; background: var(--forest); }
 body {
+  position: relative;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   min-height: 100dvh;
   color: var(--ink);
-  background: #eef5ef;
+  background: #123f38;
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(180deg, rgba(7, 42, 38, .34), rgba(7, 42, 38, .58)),
+    var(--meadow-photo);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 12%, rgba(255,255,255,.12), transparent 45%);
 }
 body.sheet-open { overflow: hidden; }
 button, input { font: inherit; }
 button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 
-#app-shell { min-height: 100vh; min-height: 100dvh; }
+#app-shell { min-height: 100vh; min-height: 100dvh; background: rgba(238,245,239,.78); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 
 /* One simple header; nothing floats over the map. */
 .site-header {
@@ -374,6 +398,19 @@ canvas { display:block; width:100%; height:100%; }
   #action-sheet.open { transform:translate(-50%,-50%) scale(1); opacity:1; }
 }
 
+.photo-credit {
+  width: min(1180px, calc(100% - 32px));
+  margin: -18px auto 24px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  color: rgba(255,255,255,.9);
+  background: rgba(7,42,38,.72);
+  font-size: .68rem;
+  line-height: 1.35;
+  text-align: right;
+}
+.photo-credit a { color: #fff; font-weight: 800; text-underline-offset: 2px; }
+
 @media (max-width: 899px) {
   .header-inner { grid-template-columns:1fr; gap:11px; }
   .brand-lockup img { width:105px; height:54px; }
@@ -381,6 +418,10 @@ canvas { display:block; width:100%; height:100%; }
   #ui-panel { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .mobile-summary { grid-template-columns:1fr 1fr; }
   .leaderboard-card { grid-column:1 / -1; }
+}
+
+@media (max-width: 620px) {
+  .photo-credit { width: calc(100% - 24px); margin: -8px auto 16px; text-align: center; }
 }
 
 @media (max-width: 620px) {
@@ -438,11 +479,11 @@ canvas { display:block; width:100%; height:100%; }
       <div class="header-inner">
         <div class="brand-lockup">
           <img src="https://www.projectseagrass.org/wp-content/uploads/2025/01/PS-updated-logo-colour-black-text-2048x1221.png" alt="Project Seagrass">
-          <div class="brand-copy"><strong>Save My Meadow</strong><span>A Project Seagrass learning game</span></div>
+          <div class="brand-copy"><strong>Save Your Meadow</strong><span>A Project Seagrass learning game</span></div>
         </div>
         <section id="compact-hud" aria-label="Game status">
           <div class="hud-topline">
-            <div id="objective-display" aria-live="polite">Save My Meadow · Ready to begin</div>
+            <div id="objective-display" aria-live="polite">Save Your Meadow · Ready to begin</div>
             <div id="player-chip" class="player-chip" hidden></div>
             <div id="timer-display">0:00</div>
           </div>
@@ -501,13 +542,14 @@ canvas { display:block; width:100%; height:100%; }
         </section>
       </aside>
     </main>
+    <footer class="photo-credit">Background photograph: <a href="https://oceanimagebank.theoceanagency.org/seagrass" target="_blank" rel="noopener noreferrer">Michiel Vos / Ocean Image Bank</a></footer>
   </div>
 
-  <section id="game-overlay" aria-label="Save My Meadow screen">
+  <section id="game-overlay" aria-label="Save Your Meadow screen">
     <div class="overlay-card">
       <img class="overlay-logo intro-content" src="https://www.projectseagrass.org/wp-content/uploads/2025/01/PS-updated-logo-colour-black-text-2048x1221.png" alt="Project Seagrass">
       <div class="overlay-kicker intro-content">A Project Seagrass learning game</div>
-      <h1 id="overlay-title" class="intro-content">Save My Meadow</h1>
+      <h1 id="overlay-title" class="intro-content">Save Your Meadow</h1>
       <div class="overlay-subtitle intro-content">Understand loss. Enable recovery. Keep seagrass healthy.</div>
       <div id="overlay-text" class="intro-content">
         <div class="phase-grid">
@@ -1424,7 +1466,7 @@ canvas { display:block; width:100%; height:100%; }
         overlay.classList.add("result-mode");
         overlayTitle.textContent = "Meadow saved! 🎉";
         overlayTitle.style.color = "#dfffee";
-        overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you completed all three parts of <strong>Save My Meadow</strong>.<br><br>Submitting your verified time to the global leaderboard…`;
+        overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you completed all three parts of <strong>Save Your Meadow</strong>.<br><br>Submitting your verified time to the global leaderboard…`;
         startBtn.textContent = "Submitting…";
         startBtn.disabled = true;
 
@@ -1444,10 +1486,10 @@ canvas { display:block; width:100%; height:100%; }
             : `This run took <strong>${formatTime(score.runSeconds)}</strong>. ${rankingText}`;
 
           const safeScorePlayerName = escapeHtml(score.playerName);
-          overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you completed <strong>Save My Meadow</strong> in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You identified and removed every driver of loss, activated all <strong>${activeRecoveryActions}</strong> recovery measures, and correctly chose all <strong>9</strong> individual protection actions while rejecting all <strong>5</strong> red herrings.`;
+          overlayText.innerHTML = `<strong>${safeScorePlayerName}</strong>, you completed <strong>Save Your Meadow</strong> in <strong>${formatTime(score.runSeconds)}</strong>.<br><br>${improvementText}<br><br>You identified and removed every driver of loss, activated all <strong>${activeRecoveryActions}</strong> recovery measures, and correctly chose all <strong>9</strong> individual protection actions while rejecting all <strong>5</strong> red herrings.`;
         } catch (error) {
           console.error("Could not submit shared score:", error);
-          overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you completed <strong>Save My Meadow</strong> in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Firebase setup before playing again.`;
+          overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you completed <strong>Save Your Meadow</strong> in approximately <strong>${formatTime(elapsedSeconds)}</strong>.<br><br>Your score could not be added to the global leaderboard. Check the internet connection and Firebase setup before playing again.`;
           leaderboardNote.textContent = "Score submission failed. Tap Refresh after checking the connection.";
         } finally {
           gameState = "won";
