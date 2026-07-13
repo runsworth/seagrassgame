@@ -1303,6 +1303,234 @@
       transform: none;
     }
 
+
+
+    /* Adaptive platform layout: one document, no nested scrolling. */
+    #game-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left));
+      background:
+        radial-gradient(circle at 78% 12%, rgba(169,216,110,0.22), transparent 24rem),
+        radial-gradient(circle at 10% 88%, rgba(49,199,166,0.19), transparent 24rem),
+        linear-gradient(150deg, #103b35 0%, #176657 58%, #1b7a65 100%);
+    }
+
+    #game-overlay:not(.part3-mode) {
+      justify-content: center;
+      gap: 0;
+    }
+
+    .overlay-logo {
+      width: min(210px, 48vw);
+      margin-bottom: 9px;
+      padding: 8px 13px;
+      border-radius: 14px;
+    }
+
+    #game-overlay h1 {
+      margin-bottom: 6px;
+      font-size: clamp(2.35rem, 7vw, 4.8rem);
+    }
+
+    .overlay-subtitle {
+      margin-bottom: 14px;
+      font-size: clamp(0.82rem, 2.3vw, 1.05rem);
+    }
+
+    .phase-intro {
+      width: min(760px, 100%);
+      margin: 0 0 15px;
+    }
+
+    .phase-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .phase-card {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 16px;
+      background: rgba(255,255,255,0.09);
+      display: grid;
+      grid-template-columns: 30px minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      text-align: left;
+    }
+
+    .phase-card > span {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      color: #103b35;
+      background: #eef8db;
+      font-weight: 950;
+    }
+
+    .phase-card strong,
+    .phase-card small { display: block; }
+    .phase-card strong { color: #fff; font-size: 0.84rem; line-height: 1.15; }
+    .phase-card small { margin-top: 4px; color: rgba(244,251,243,0.76); font-size: 0.7rem; line-height: 1.3; }
+
+    #player-entry { width: min(560px, 100%); margin-bottom: 0; }
+    #player-entry label { text-align: center; }
+    .iphone-note { margin-top: 8px !important; }
+
+    #game-overlay.result-mode .overlay-kicker,
+    #game-overlay.result-mode .overlay-subtitle,
+    #game-overlay.result-mode .iphone-note,
+    #game-overlay.result-mode #player-entry label,
+    #game-overlay.result-mode #player-name,
+    #game-overlay.result-mode #name-error { display: none !important; }
+
+    #game-overlay.result-mode #player-entry { width: auto; }
+    #game-overlay.result-mode .player-entry-row { display: block; }
+    #game-overlay.result-mode #start-btn { width: auto; min-width: 170px; }
+    #game-overlay.result-mode #overlay-text { max-width: 620px; color: rgba(244,251,243,0.9); line-height: 1.48; }
+
+    #game-overlay.part3-mode {
+      overflow: hidden;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    }
+
+    #part3-panel {
+      width: min(940px, 100%);
+      max-height: 100%;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .part3-intro { margin: 7px auto 8px !important; }
+    .part3-statusbar { margin-bottom: 7px; }
+
+    .part3-pagebar {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+    }
+
+    .part3-page-button {
+      min-height: 38px;
+      padding: 7px 11px;
+      border-color: rgba(255,255,255,0.24);
+      color: #f5fbf3;
+      background: rgba(255,255,255,0.10);
+      box-shadow: none;
+      font-size: 0.72rem;
+    }
+
+    .part3-page-button:disabled { opacity: 0.35; cursor: default; }
+    #part3-page-label { color: rgba(244,251,243,0.88); text-align: center; font-size: 0.72rem; font-weight: 900; }
+
+    #part3-actions {
+      flex: 1 1 auto;
+      min-height: 0;
+      align-content: center;
+    }
+
+    #part3-feedback {
+      min-height: 43px;
+      margin: 8px 0;
+      padding: 8px 10px;
+    }
+
+    .part3-controls {
+      position: static;
+      flex: 0 0 auto;
+    }
+
+    /* Desktop and laptop: balanced canvas and information column. */
+    @media (min-width: 901px) {
+      body { padding: 18px; }
+      #app-shell { width: min(100%, 1180px); }
+      #game-layout { grid-template-columns: minmax(0, 700px) minmax(300px, 360px); gap: 18px; padding: 18px; }
+      #map-container { max-width: 680px; }
+      #ui-panel { gap: 9px; }
+      .feedback-box { min-height: 96px; }
+      .instruction-box, .feedback-box, .meter-box, .society-box { padding: 12px; }
+    }
+
+    /* Tablet: map first, then a two-column information area. */
+    @media (min-width: 621px) and (max-width: 900px) {
+      #game-layout { grid-template-columns: 1fr; padding: 14px; gap: 14px; }
+      #map-container { width: min(100%, 680px); border-radius: 26px; }
+      #ui-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+      #ui-panel > h3 { grid-column: 1 / -1; }
+      .leaderboard-card, .legend { grid-column: 1 / -1; }
+    }
+
+    /* Phone: one clean page scroll; overlays themselves never scroll. */
+    @media (max-width: 620px) {
+      body { padding: 0; }
+      #app-shell { min-height: 100dvh; overflow: visible; }
+      #compact-hud { position: sticky; }
+      #brand-mark { min-height: 54px; padding: 6px 10px; gap: 8px; }
+      #brand-mark img { width: 96px; }
+      .brand-copy { padding-left: 8px; }
+      .brand-copy strong { font-size: 0.93rem; }
+      .brand-copy span { font-size: 0.56rem; }
+      #game-layout { grid-template-columns: 1fr; gap: 0; padding: 0; }
+      #map-container { width: 100%; max-width: none; border-radius: 0 0 22px 22px; }
+      #ui-panel { padding: 14px 12px calc(20px + env(safe-area-inset-bottom)); }
+
+      #game-overlay { padding: max(10px, env(safe-area-inset-top)) 14px max(10px, env(safe-area-inset-bottom)); }
+      .overlay-logo { width: min(145px, 42vw); margin-bottom: 5px; padding: 5px 9px; }
+      .overlay-kicker { margin-bottom: 5px; padding: 4px 8px; font-size: 0.56rem; }
+      #game-overlay h1 { margin-bottom: 4px; font-size: clamp(2rem, 10vw, 2.75rem); }
+      .overlay-subtitle { margin-bottom: 8px; font-size: 0.74rem; }
+      .phase-intro { margin-bottom: 9px; }
+      .phase-grid { grid-template-columns: 1fr; gap: 5px; }
+      .phase-card { padding: 7px 9px; border-radius: 11px; grid-template-columns: 24px minmax(0,1fr); gap: 7px; }
+      .phase-card > span { width: 24px; height: 24px; font-size: 0.72rem; }
+      .phase-card strong { font-size: 0.73rem; }
+      .phase-card small { margin-top: 1px; font-size: 0.61rem; line-height: 1.2; }
+      #player-entry label { margin-bottom: 4px; font-size: 0.63rem; }
+      .player-entry-row { grid-template-columns: 1fr; gap: 6px; }
+      #player-name, #start-btn { width: 100%; min-height: 42px; }
+      #start-btn { min-width: 0; }
+      #name-error { min-height: 12px; margin-top: 2px; }
+      .iphone-note { display: none !important; }
+
+      #part3-title { font-size: clamp(1.35rem, 7vw, 1.85rem); }
+      .part3-intro { font-size: 0.68rem !important; line-height: 1.25 !important; }
+      .part3-statusbar { font-size: 0.62rem; }
+      #part3-actions { grid-template-columns: 1fr; gap: 6px; }
+      .part3-action { min-height: 66px; padding: 7px 8px; grid-template-columns: 34px minmax(0,1fr); gap: 7px; }
+      .part3-action-icon { width: 34px; height: 34px; font-size: 1.15rem; }
+      .part3-action strong { font-size: 0.75rem; }
+      .part3-action small { font-size: 0.61rem; line-height: 1.2; }
+      .part3-card-result { font-size: 0.59rem; }
+      #part3-feedback { font-size: 0.67rem; line-height: 1.3; }
+      .part3-controls .primary-btn, .part3-controls .secondary-btn { min-height: 42px; padding: 8px 10px; font-size: 0.75rem; }
+    }
+
+    @media (max-height: 700px) {
+      .overlay-logo { width: min(120px, 34vw); }
+      .overlay-kicker, .iphone-note { display: none !important; }
+      #game-overlay h1 { font-size: clamp(1.8rem, 8vh, 2.6rem); }
+      .overlay-subtitle { margin-bottom: 6px; }
+      .phase-card small { display: none; }
+      .phase-card { padding: 6px 8px; }
+      #part3-title { font-size: 1.35rem; }
+      .part3-intro { display: none; }
+    }
+
   </style>
 </head>
 <body>
@@ -1335,11 +1563,13 @@
           <div class="overlay-kicker intro-content">🌊 A Project Seagrass learning game</div>
           <h1 id="overlay-title" class="intro-content">Save My Meadow</h1>
           <div class="overlay-subtitle intro-content">Understand loss. Enable recovery. Keep seagrass healthy.</div>
-          <p id="overlay-text" class="phase-intro intro-content">
-            <strong>Part 1 — Understand seagrass loss:</strong> try your hand at wiping out a healthy meadow by identifying the activities that drive sediment and nutrient pollution.<br><br>
-            <strong>Part 2 — Enable recovery:</strong> remove every threat and introduce the actions needed to bring the meadow back.<br><br>
-            <strong>Part 3 — Keep seagrass healthy:</strong> decide which actions you can take as an individual—and avoid the red herrings. Nothing is labelled helpful or harmful, so you must reason it out.
-          </p>
+          <div id="overlay-text" class="phase-intro intro-content">
+            <div class="phase-grid" aria-label="Three parts of Save My Meadow">
+              <div class="phase-card"><span>1</span><div><strong>Understand loss</strong><small>Work out which activities can wipe out a healthy seagrass meadow.</small></div></div>
+              <div class="phase-card"><span>2</span><div><strong>Enable recovery</strong><small>Remove every threat and introduce all the actions the meadow needs.</small></div></div>
+              <div class="phase-card"><span>3</span><div><strong>Keep it healthy</strong><small>Choose what individuals can genuinely do and avoid the red herrings.</small></div></div>
+            </div>
+          </div>
           <div id="player-entry" class="intro-content">
             <label for="player-name">Enter your name for the Save My Meadow global leaderboard</label>
             <div class="player-entry-row">
@@ -1357,6 +1587,11 @@
             <div class="part3-statusbar">
               <span id="part3-selection-count">0 actions selected</span>
               <span id="part3-attempt-count">No checks yet</span>
+            </div>
+            <div class="part3-pagebar" aria-label="Action pages">
+              <button class="secondary-btn part3-page-button" id="part3-prev" type="button">← Previous</button>
+              <span id="part3-page-label" aria-live="polite">Page 1</span>
+              <button class="secondary-btn part3-page-button" id="part3-next" type="button">Next →</button>
             </div>
             <div id="part3-actions" aria-label="Personal seagrass protection actions"></div>
             <div id="part3-feedback" role="status" aria-live="polite">Choose carefully, then check your decisions. You can change your selections after receiving feedback.</div>
@@ -1522,6 +1757,9 @@
       const part3Feedback = document.getElementById("part3-feedback");
       const part3ClearButton = document.getElementById("part3-clear");
       const part3CheckButton = document.getElementById("part3-check");
+      const part3PrevButton = document.getElementById("part3-prev");
+      const part3NextButton = document.getElementById("part3-next");
+      const part3PageLabel = document.getElementById("part3-page-label");
 
       const BASE_SEDIMENT = 20;
       const BASE_NUTRIENTS = 20;
@@ -1544,6 +1782,8 @@
       let leaderboardRefreshTimer = null;
       let isSubmittingScore = false;
       let part3Attempts = 0;
+      let part3Page = 0;
+      let part3ReviewMode = false;
 
       let firebaseApp = null;
       let firebaseAuth = null;
@@ -2063,9 +2303,37 @@
         button.setAttribute("aria-pressed", String(action.selected));
       }
 
+      function getPart3PageSize() {
+        if (window.innerWidth <= 620) return 3;
+        if (window.innerWidth <= 900) return 6;
+        return 8;
+      }
+
+      function getPart3PageCount() {
+        return Math.max(1, Math.ceil(personalActions.length / getPart3PageSize()));
+      }
+
+      function applyPart3ReviewClass(action, button) {
+        if (!part3ReviewMode) return;
+        const result = button.querySelector(".part3-card-result");
+        if (action.helpful && !action.selected) {
+          button.classList.add("missed-helpful");
+          if (result) result.textContent = `Helpful action — add this. ${action.explanation}`;
+        } else if (!action.helpful && action.selected) {
+          button.classList.add("false-positive");
+          if (result) result.textContent = `Red herring — remove this. ${action.explanation}`;
+        }
+      }
+
       function renderPart3Actions() {
+        const pageSize = getPart3PageSize();
+        const pageCount = getPart3PageCount();
+        part3Page = Math.max(0, Math.min(part3Page, pageCount - 1));
+        const firstIndex = part3Page * pageSize;
+        const pageActions = personalActions.slice(firstIndex, firstIndex + pageSize);
+
         part3ActionsContainer.innerHTML = "";
-        personalActions.forEach(action => {
+        pageActions.forEach(action => {
           const button = document.createElement("button");
           button.id = `part3-${action.id}`;
           button.type = "button";
@@ -2075,6 +2343,7 @@
           button.addEventListener("click", () => {
             if (gameState !== "protect") return;
             action.selected = !action.selected;
+            part3ReviewMode = false;
             clearPart3FeedbackClasses();
             part3Feedback.classList.remove("success");
             part3Feedback.textContent = "Choices changed. Check them when you are ready.";
@@ -2083,12 +2352,19 @@
           });
           part3ActionsContainer.appendChild(button);
           updatePart3ActionVisual(action);
+          applyPart3ReviewClass(action, button);
         });
+
+        part3PageLabel.textContent = `Page ${part3Page + 1} of ${pageCount}`;
+        part3PrevButton.disabled = part3Page === 0;
+        part3NextButton.disabled = part3Page >= pageCount - 1;
         updatePart3SelectionCount();
       }
 
       function resetPart3Challenge() {
         part3Attempts = 0;
+        part3Page = 0;
+        part3ReviewMode = false;
         personalActions.forEach(action => { action.selected = false; });
         part3AttemptCount.textContent = "No checks yet";
         part3Feedback.classList.remove("success");
@@ -2111,9 +2387,9 @@
         instructionText.textContent = "PART 3 — The meadow is restored. Now decide which actions individuals can genuinely take to keep seagrass healthy. Select every useful action and avoid the red herrings.";
         feedbackText.textContent = "Recovery is only part of the story. Long-term protection depends on everyday choices, community action, monitoring and speaking up for healthy coasts.";
         overlay.style.display = "flex";
+        overlay.classList.remove("result-mode");
         overlay.classList.add("part3-mode");
         part3Panel.hidden = false;
-        part3Panel.scrollIntoView({ block: "start" });
         window.setTimeout(() => part3CheckButton.focus(), 80);
       }
 
@@ -2128,21 +2404,7 @@
         const selectedRedHerrings = personalActions.filter(action => !action.helpful && action.selected);
         const chosenHelpful = personalActions.filter(action => action.helpful && action.selected).length;
 
-        missedHelpful.forEach(action => {
-          const button = document.getElementById(`part3-${action.id}`);
-          if (!button) return;
-          button.classList.add("missed-helpful");
-          const result = button.querySelector(".part3-card-result");
-          if (result) result.textContent = `Helpful action — add this. ${action.explanation}`;
-        });
-
-        selectedRedHerrings.forEach(action => {
-          const button = document.getElementById(`part3-${action.id}`);
-          if (!button) return;
-          button.classList.add("false-positive");
-          const result = button.querySelector(".part3-card-result");
-          if (result) result.textContent = `Red herring — remove this. ${action.explanation}`;
-        });
+        part3ReviewMode = true;
 
         if (missedHelpful.length === 0 && selectedRedHerrings.length === 0) {
           part3Feedback.classList.add("success");
@@ -2155,7 +2417,11 @@
         const missedWord = missedHelpful.length === 1 ? "helpful action" : "helpful actions";
         const redWord = selectedRedHerrings.length === 1 ? "red herring" : "red herrings";
         part3Feedback.classList.remove("success");
-        part3Feedback.innerHTML = `You selected <strong>${chosenHelpful} of 9</strong> genuine actions. Add <strong>${missedHelpful.length}</strong> missed ${missedWord} and remove <strong>${selectedRedHerrings.length}</strong> selected ${redWord}. The highlighted cards explain the mistakes.`;
+        part3Feedback.innerHTML = `You selected <strong>${chosenHelpful} of 9</strong> genuine actions. Add <strong>${missedHelpful.length}</strong> missed ${missedWord} and remove <strong>${selectedRedHerrings.length}</strong> selected ${redWord}. Review the highlighted choice below, then move through the pages.`;
+
+        const firstIncorrect = personalActions.findIndex(action => (action.helpful && !action.selected) || (!action.helpful && action.selected));
+        if (firstIncorrect >= 0) part3Page = Math.floor(firstIncorrect / getPart3PageSize());
+        renderPart3Actions();
       }
 
       function setupNodes() {
@@ -2198,6 +2464,7 @@
 
       async function startGame() {
         if (gameState === "submitting" || isSubmittingScore) return;
+        overlay.classList.remove("result-mode", "part3-mode");
 
         const enteredName = normalisePlayerName(playerNameInput.value);
         if (!enteredName) {
@@ -2288,6 +2555,8 @@
         const { activeRecoveryActions } = getRecoveryStatus();
         const safeCurrentPlayerName = escapeHtml(currentPlayerName);
         overlay.style.display = "flex";
+        overlay.classList.remove("part3-mode");
+        overlay.classList.add("result-mode");
         overlayTitle.textContent = "Meadow saved! 🎉";
         overlayTitle.style.color = "#dfffee";
         overlayText.innerHTML = `<strong>${safeCurrentPlayerName}</strong>, you completed all three parts of <strong>Save My Meadow</strong>.<br><br>Submitting your verified time to the global leaderboard…`;
@@ -2766,14 +3035,25 @@
       });
 
       part3CheckButton.addEventListener("click", evaluatePart3Choices);
+      part3PrevButton.addEventListener("click", () => {
+        if (part3Page <= 0) return;
+        part3Page -= 1;
+        renderPart3Actions();
+      });
+      part3NextButton.addEventListener("click", () => {
+        if (part3Page >= getPart3PageCount() - 1) return;
+        part3Page += 1;
+        renderPart3Actions();
+      });
       part3ClearButton.addEventListener("click", () => {
         if (gameState !== "protect") return;
         personalActions.forEach(action => { action.selected = false; });
+        part3Page = 0;
+        part3ReviewMode = false;
         clearPart3FeedbackClasses();
         part3Feedback.classList.remove("success");
         part3Feedback.textContent = "All choices cleared. Select the actions you believe genuinely help seagrass.";
-        personalActions.forEach(updatePart3ActionVisual);
-        updatePart3SelectionCount();
+        renderPart3Actions();
       });
 
       confirmAction.addEventListener("click", confirmPendingAction);
@@ -2790,6 +3070,15 @@
       } else {
         window.addEventListener("resize", positionNodes);
       }
+
+      let previousPart3PageSize = getPart3PageSize();
+      window.addEventListener("resize", () => {
+        const nextPageSize = getPart3PageSize();
+        if (nextPageSize !== previousPart3PageSize) {
+          previousPart3PageSize = nextPageSize;
+          if (gameState === "protect") renderPart3Actions();
+        }
+      });
 
       playerNameInput.value = loadRememberedPlayerName();
       renderLeaderboard();
