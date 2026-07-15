@@ -548,6 +548,253 @@ body::after {
   }
 }
 
+
+
+/* --------------------------------------------------------------------------
+   Opening-scene structure
+   The introduction is a real foreground scene: content first, photograph
+   immediately beneath it. The underlying game is fully covered. Once play
+   begins, the same photograph becomes the page background behind the game.
+   -------------------------------------------------------------------------- */
+
+body::before {
+  opacity: 1;
+  transition: opacity .45s ease, transform .65s ease;
+}
+
+#app-shell {
+  background: transparent;
+}
+
+/* Intro mode: an opaque two-part page, not a translucent layer over the game. */
+#game-overlay:not(.part3-mode):not(.result-mode) {
+  display: grid;
+  grid-template-rows: auto minmax(260px, 1fr);
+  align-items: stretch;
+  justify-items: stretch;
+  padding: 0;
+  overflow-y: auto;
+  color: #fff;
+  background: var(--cream);
+  opacity: 1;
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) .overlay-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+  padding: clamp(18px, 3.2vw, 34px) max(18px, calc((100vw - 1080px) / 2));
+  border: 0;
+  border-radius: 0;
+  color: #fff;
+  background:
+    radial-gradient(circle at 82% 5%, rgba(168,214,109,.18), transparent 24rem),
+    linear-gradient(118deg, #123f38 0%, #1d6655 58%, #257b62 100%);
+  box-shadow: 0 14px 34px rgba(18,63,56,.22);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) .overlay-logo {
+  width: min(190px, 46vw);
+  max-height: 82px;
+  margin-bottom: 9px;
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) h1 {
+  margin-top: 4px;
+  font-size: clamp(2.25rem, 6vw, 4.2rem);
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) .overlay-subtitle {
+  margin-bottom: 14px;
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) .phase-grid {
+  width: min(930px, 100%);
+  margin-inline: auto;
+}
+
+#game-overlay:not(.part3-mode):not(.result-mode) #player-entry {
+  width: min(620px, 100%);
+}
+
+.intro-photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  min-height: 300px;
+  background-image: var(--meadow-photo);
+  background-size: cover;
+  background-position: center 57%;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 18px 28px rgba(18,63,56,.16);
+}
+
+.intro-photo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(18,63,56,.08), transparent 28%);
+}
+
+/* Part 3 and result screens retain a centred dialogue structure. */
+#game-overlay.part3-mode,
+#game-overlay.result-mode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  overflow-y: auto;
+  background: linear-gradient(145deg, rgba(18,63,56,.97), rgba(29,102,85,.96));
+}
+
+#game-overlay.part3-mode .overlay-card,
+#game-overlay.result-mode .overlay-card {
+  width: min(900px, 100%);
+  max-height: calc(100dvh - 28px);
+  overflow: auto;
+  padding: clamp(18px, 4vw, 34px);
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 24px;
+  background: rgba(255,255,255,.08);
+  box-shadow: 0 24px 70px rgba(0,0,0,.24);
+}
+
+#game-overlay.part3-mode .intro-photo,
+#game-overlay.result-mode .intro-photo {
+  display: none !important;
+}
+
+/* Transition: the foreground intro fades away and the same photograph remains
+   as the background behind the active game. */
+#game-overlay.leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .38s ease;
+}
+
+body.game-active::before {
+  transform: scale(1.015);
+  background-image:
+    linear-gradient(180deg, rgba(7,42,38,.02), rgba(7,42,38,.10)),
+    var(--meadow-photo);
+}
+
+body.game-active #app-shell {
+  background: rgba(238,245,239,.06);
+}
+
+/* Keep panels readable while leaving the photograph naturally coloured. */
+body.game-active .instruction-box,
+body.game-active .feedback-box,
+body.game-active .panel-card,
+body.game-active .leaderboard-card {
+  background-color: rgba(255,255,255,.91);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+@media (max-width: 620px) {
+  #game-overlay:not(.part3-mode):not(.result-mode) {
+    grid-template-rows: auto minmax(235px, 42vh);
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .overlay-card {
+    padding: calc(12px + env(safe-area-inset-top)) 14px 14px;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .overlay-logo {
+    width: min(142px, 40vw);
+    max-height: 62px;
+    margin-bottom: 5px;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .overlay-kicker {
+    font-size: .58rem;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) h1 {
+    margin: 3px 0 1px;
+    font-size: clamp(2rem, 10vw, 2.75rem);
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .overlay-subtitle {
+    margin-bottom: 9px;
+    font-size: .7rem;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .phase-grid {
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .phase-card {
+    display: block;
+    padding: 7px;
+    text-align: center;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .phase-card > span {
+    width: 25px;
+    height: 25px;
+    margin: 0 auto 4px;
+    font-size: .72rem;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .phase-card strong {
+    font-size: .67rem;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .phase-card small {
+    display: none;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) #player-entry label {
+    margin-bottom: 5px;
+    font-size: .66rem;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .player-entry-row {
+    grid-template-columns: minmax(0,1fr) auto;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) #player-name,
+  #game-overlay:not(.part3-mode):not(.result-mode) #start-btn {
+    min-height: 43px;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) #start-btn {
+    width: auto;
+    padding-inline: 13px;
+    white-space: nowrap;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) .iphone-note {
+    display: none;
+  }
+
+  .intro-photo {
+    min-height: 235px;
+    background-position: 49% 56%;
+  }
+}
+
+@media (max-width: 390px) {
+  #game-overlay:not(.part3-mode):not(.result-mode) .player-entry-row {
+    grid-template-columns: 1fr;
+  }
+
+  #game-overlay:not(.part3-mode):not(.result-mode) #start-btn {
+    width: 100%;
+  }
+}
+
 </style>
 </head>
 
@@ -657,6 +904,7 @@ body::after {
       </section>
       <noscript><div class="script-warning">JavaScript is not running. Open the hosted game in Safari or another browser.</div></noscript>
     </div>
+    <div class="intro-photo intro-content" role="img" aria-label="Intertidal seagrass meadow beneath clear shallow water with hills in the distance"></div>
   </section>
 
   <button id="sheet-backdrop" type="button" aria-label="Close activity card"></button>
@@ -1370,6 +1618,7 @@ body::after {
         objectiveDisplay.style.color = "#eef8db";
         instructionText.textContent = "PART 3 — The meadow is restored. Now decide which actions individuals can genuinely take to keep seagrass healthy. Select every useful action and avoid the red herrings.";
         feedbackText.textContent = "Recovery is only part of the story. Long-term protection depends on everyday choices, community action, monitoring and speaking up for healthy coasts.";
+        overlay.classList.remove("leaving");
         overlay.style.display = "flex";
         overlay.classList.remove("result-mode");
         overlay.classList.add("part3-mode");
@@ -1449,6 +1698,7 @@ body::after {
       async function startGame() {
         if (gameState === "submitting" || isSubmittingScore) return;
         overlay.classList.remove("result-mode", "part3-mode");
+        overlay.style.display = "";
 
         const enteredName = normalisePlayerName(playerNameInput.value);
         if (!enteredName) {
@@ -1483,7 +1733,12 @@ body::after {
           currentRunId = newRunId;
           playerChip.textContent = `👤 ${enteredName}`;
           playerChip.hidden = false;
-          overlay.style.display = "none";
+          document.body.classList.add("game-active");
+          overlay.classList.add("leaving");
+          window.setTimeout(() => {
+            overlay.style.display = "none";
+            overlay.classList.remove("leaving");
+          }, 390);
           gameState = "destroy";
           objectiveDisplay.textContent = "PART 1: Understand what drives seagrass loss";
           objectiveDisplay.style.color = "#ffd54f";
@@ -1538,6 +1793,7 @@ body::after {
 
         const { activeRecoveryActions } = getRecoveryStatus();
         const safeCurrentPlayerName = escapeHtml(currentPlayerName);
+        overlay.classList.remove("leaving");
         overlay.style.display = "flex";
         overlay.classList.remove("part3-mode");
         overlay.classList.add("result-mode");
